@@ -43,7 +43,8 @@ filename, packaged version, installer name and update metadata must all agree.
 1. **Prepare.** Run `npm run release:prepare <version>`. It updates `package.json`
    and the lockfile, creates `docs/releases/v<version>.md` from the
    [release-notes template](release-notes-template.md) with the previous install
-   guidance carried over, and resets `shared/releaseAnnouncement.json`. Fill every
+   guidance carried over, resets `shared/releaseAnnouncement.json`, and makes the current public release the
+   every-run CI upgrade baseline. Fill every
    `<...>` placeholder (the release contract rejects leftovers) and copy both short
    summaries into the announcement. Notes stay ready for direct publication: no
    draft status or planned-delivery wording.

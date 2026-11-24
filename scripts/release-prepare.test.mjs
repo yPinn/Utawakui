@@ -7,12 +7,17 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { verifyReleaseNotes } from './release-contract.mjs';
 import {
   carryStableSections,
-  prepareRelease,
   extractCopyBlock,
+  prepareRelease,
+  publishedInstallerSha256,
+  rotateBaselines,
 } from './release-prepare.mjs';
 
 const rootDirectory = path.resolve(import.meta.dirname, '..');
 const temporaryDirectories = [];
+const SHA_053 = 'a'.repeat(64);
+const fakeGh = () => `${SHA_053}  Utawakui-Setup-0.5.3.exe
+`;
 
 afterEach(() => {
   for (const directory of temporaryDirectories.splice(0)) {
@@ -48,8 +53,33 @@ function createFixture() {
     path.join(rootDirectory, 'docs/releases/v0.5.3.md'),
     path.join(directory, 'docs/releases/v0.5.3.md'),
   );
+  write(
+    'shared/appUpdateValues.json',
+    `${JSON.stringify({ releaseRepository: 'yPinn/Utawakui-Releases' })}
+`,
+  );
+  write(
+    'scripts/release-baselines.json',
+    `${JSON.stringify(
+      [
+        {
+          version: '0.3.0',
+          sha256: 'b'.repeat(64),
+          everyRun: false,
+          boundary: 'first',
+        },
+        { version: '0.4.0', sha256: 'c'.repeat(64), everyRun: true },
+      ],
+      null,
+      2,
+    )}
+`,
+  );
   return directory;
 }
+
+const prepare = (directory, version, runGh = fakeGh) =>
+  prepareRelease({ rootDirectory: directory, version, runGh });
 
 const readJson = (directory, relative) =>
   JSON.parse(fs.readFileSync(path.join(directory, relative), 'utf8'));
@@ -57,10 +87,7 @@ const readJson = (directory, relative) =>
 describe('prepareRelease', () => {
   it('bumps versions, scaffolds notes, and clears the announcement summary', () => {
     const directory = createFixture();
-    const { notesCreated, notesPath } = prepareRelease({
-      rootDirectory: directory,
-      version: '0.6.0',
-    });
+    const { notesCreated, notesPath } = prepare(directory, '0.6.0');
 
     expect(readJson(directory, 'package.json').version).toBe('0.6.0');
     const lock = readJson(directory, 'package-lock.json');
@@ -72,6 +99,15 @@ describe('prepareRelease', () => {
       version: '0.6.0',
       summary: { 'zh-TW': '', 'en-US': '' },
     });
+    expect(readJson(directory, 'scripts/release-baselines.json')).toEqual([
+      {
+        version: '0.3.0',
+        sha256: 'b'.repeat(64),
+        everyRun: false,
+        boundary: 'first',
+      },
+      { version: '0.5.3', sha256: SHA_053, everyRun: true },
+    ]);
 
     expect(notesCreated).toBe(true);
     const notes = fs.readFileSync(notesPath, 'utf8');
@@ -82,16 +118,13 @@ describe('prepareRelease', () => {
     expect(() => verifyReleaseNotes(notesPath)).toThrow(/placeholder/);
   });
 
-  it('carries the previous stable install and limitation wording', () => {
+  it('carries the previous install guidance', () => {
     const directory = createFixture();
     const previous = fs.readFileSync(
       path.join(directory, 'docs/releases/v0.5.3.md'),
       'utf8',
     );
-    const { notesPath } = prepareRelease({
-      rootDirectory: directory,
-      version: '0.6.0',
-    });
+    const { notesPath } = prepare(directory, '0.6.0');
     const notes = fs.readFileSync(notesPath, 'utf8');
     const bullets = (text, heading) =>
       text
@@ -121,17 +154,46 @@ describe('prepareRelease', () => {
     const notesPath = path.join(directory, 'docs/releases/v0.6.0.md');
     fs.writeFileSync(notesPath, 'existing');
 
-    expect(
-      prepareRelease({ rootDirectory: directory, version: '0.6.0' })
-        .notesCreated,
-    ).toBe(false);
+    expect(prepare(directory, '0.6.0').notesCreated).toBe(false);
     expect(fs.readFileSync(notesPath, 'utf8')).toBe('existing');
-    expect(() =>
-      prepareRelease({ rootDirectory: directory, version: '0.5.0' }),
-    ).toThrow(/greater/);
-    expect(() =>
-      prepareRelease({ rootDirectory: directory, version: '0.7.0-beta.1' }),
-    ).toThrow(/stable/);
+    expect(() => prepare(directory, '0.5.0')).toThrow(/greater/);
+    expect(() => prepare(directory, '0.7.0-beta.1')).toThrow(/stable/);
+  });
+});
+
+describe('CI upgrade baselines', () => {
+  it('makes the latest release the only every-run baseline and keeps boundaries', () => {
+    expect(
+      rotateBaselines(
+        [
+          { version: '0.3.0', sha256: '1', everyRun: false, boundary: 'first' },
+          { version: '0.5.3', sha256: '2', everyRun: true, boundary: 'format' },
+          { version: '0.5.2', sha256: '3', everyRun: false },
+        ],
+        { version: '0.6.0', sha256: '4' },
+      ),
+    ).toEqual([
+      { version: '0.3.0', sha256: '1', everyRun: false, boundary: 'first' },
+      { version: '0.5.3', sha256: '2', everyRun: false, boundary: 'format' },
+      { version: '0.6.0', sha256: '4', everyRun: true },
+    ]);
+  });
+
+  it('reads the installer hash from published SHA256SUMS and edits nothing on failure', () => {
+    expect(
+      publishedInstallerSha256({
+        repository: 'r',
+        version: '0.5.3',
+        runGh: () => `${'A'.repeat(64)}  Utawakui-Setup-0.5.3.exe
+`,
+      }),
+    ).toBe('a'.repeat(64));
+
+    const directory = createFixture();
+    expect(() => prepare(directory, '0.6.0', () => 'nothing')).toThrow(
+      /no published SHA-256/,
+    );
+    expect(readJson(directory, 'package.json').version).toBe('0.5.3');
   });
 });
 

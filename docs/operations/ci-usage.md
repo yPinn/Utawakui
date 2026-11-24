@@ -71,9 +71,13 @@ are in ASAR, and the installer/blockmap/`latest.yml` contract is valid.
 `scripts/release-baselines.json`: it verifies the pinned public installer
 checksum, installs it into an isolated root, upgrades it to the candidate, checks
 version, registry, shortcut and data-retention evidence, traces cold and warm
-startup, and uninstalls. Entries not older than the candidate are skipped;
-`everyRun: false` entries run only on manual diagnostics. Add each newly
-published version to the baselines. The job has a 30-minute timeout, reads no
+startup, and uninstalls. Entries not older than the candidate are skipped.
+
+Baselines follow a sliding window. The latest public release is the only
+`everyRun: true` entry, because most users upgrade from it. Earlier releases stay
+only as `boundary` entries (for example the first updater-enabled release or a
+data-format change), set to `everyRun: false` and run on manual diagnostics.
+`release:prepare` rotates the window with the published installer checksum. The job has a 30-minute timeout, reads no
 secrets, publishes nothing and keeps only bounded JSON／startup evidence for
 7 days.
 

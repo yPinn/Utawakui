@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
@@ -82,7 +83,49 @@ function previousNotesPath(releasesDirectory, version) {
     : null;
 }
 
-export function prepareRelease({ rootDirectory, version }) {
+// The latest release is the only every-run baseline; earlier ones survive only as boundaries.
+export function rotateBaselines(baselines, latest) {
+  const boundaries = baselines
+    .filter((entry) => entry.boundary && entry.version !== latest.version)
+    .map((entry) => ({ ...entry, everyRun: false }));
+  return [
+    ...boundaries,
+    { version: latest.version, sha256: latest.sha256, everyRun: true },
+  ].sort((a, b) => semver.compare(a.version, b.version));
+}
+
+function defaultRunGh(args) {
+  return execFileSync('gh', args, { encoding: 'utf8' });
+}
+
+export function publishedInstallerSha256({ repository, version, runGh }) {
+  const sums = runGh([
+    'release',
+    'download',
+    `v${version}`,
+    '--repo',
+    repository,
+    '--pattern',
+    'SHA256SUMS.txt',
+    '--output',
+    '-',
+  ]);
+  const installer = `Utawakui-Setup-${version}.exe`;
+  const line = sums
+    .split(/\r?\n/u)
+    .find((entry) => entry.trim().endsWith(installer));
+  const sha256 = line?.trim().split(/\s+/u)[0]?.toLowerCase();
+  if (!/^[a-f0-9]{64}$/u.test(sha256 ?? '')) {
+    fail(`no published SHA-256 for ${installer}`);
+  }
+  return sha256;
+}
+
+export function prepareRelease({
+  rootDirectory,
+  version,
+  runGh = defaultRunGh,
+}) {
   if (
     !version ||
     semver.valid(version) !== version ||
@@ -97,12 +140,30 @@ export function prepareRelease({ rootDirectory, version }) {
     fail(`version must be greater than the current ${packageJson.version}`);
   }
 
+  // Network first, so a failed lookup leaves no partial edits.
+  const { releaseRepository } = JSON.parse(
+    readText(path.join(rootDirectory, 'shared/appUpdateValues.json')),
+  );
+  const baselinesPath = path.join(
+    rootDirectory,
+    'scripts/release-baselines.json',
+  );
+  const baselines = rotateBaselines(JSON.parse(readText(baselinesPath)), {
+    version: packageJson.version,
+    sha256: publishedInstallerSha256({
+      repository: releaseRepository,
+      version: packageJson.version,
+      runGh,
+    }),
+  });
+
   const lock = JSON.parse(readText(lockPath));
   packageJson.version = version;
   lock.version = version;
   lock.packages[''].version = version;
   writeJson(packagePath, packageJson);
   writeJson(lockPath, lock);
+  writeJson(baselinesPath, baselines);
 
   const releasesDirectory = path.join(rootDirectory, 'docs/releases');
   const notesPath = path.join(releasesDirectory, `v${version}.md`);
@@ -146,6 +207,7 @@ function main() {
         ? `Created ${relativeNotes}; fill every <...> placeholder.`
         : `Kept existing ${relativeNotes}.`,
       'Copy both short summaries into shared/releaseAnnouncement.json.',
+      'The previous release is now the every-run CI upgrade baseline.',
       `Then commit, tag v${version} on main, and push the tag.`,
       '',
     ].join('\n'),

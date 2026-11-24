@@ -263,13 +263,13 @@ describe('ordinary CI workflow', () => {
         'utf8',
       ),
     );
-    expect(baselines.map((entry) => entry.version)).toEqual(
-      expect.arrayContaining(['0.3.0', '0.4.0']),
-    );
+    // Sliding window: one every-run baseline (the latest release); the rest are boundaries.
+    expect(baselines.filter((entry) => entry.everyRun)).toHaveLength(1);
     for (const entry of baselines) {
       expect(entry.version).toMatch(/^\d+\.\d+\.\d+$/u);
       expect(entry.sha256).toMatch(/^[a-f0-9]{64}$/u);
       expect(typeof entry.everyRun).toBe('boolean');
+      if (!entry.everyRun) expect(entry.boundary).toMatch(/\S/u);
     }
     expect(installedAcceptance).toContain('Invoke-WebRequest');
     expect(installedAcceptance).toContain('Stop-Process -Id');
