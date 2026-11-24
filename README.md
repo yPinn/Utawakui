@@ -4,8 +4,8 @@
 
 本 repo 是 Utawakui 的私有開發來源，讀者是開發與維護人員。使用者向的產品介紹、
 下載與版本資訊在公開的 [Utawakui-Releases](https://github.com/yPinn/Utawakui-Releases)
-與產品網站（[ADR 0035](docs/adr/0035-product-site-and-download-entry.md)），原稿位於
-`docs/releases/`。
+與產品網站（[ADR 0035](docs/adr/0035-product-site-and-download-entry.md)）。公開 repo
+的檔案原稿在 `public-repo/`，發行說明在 `docs/releases/`，發版時自動同步。
 
 目前範圍與完成度以[產品規格](docs/spec.md)為準，技術邊界見[架構圖](docs/architecture.md)。
 
@@ -40,6 +40,7 @@ resources/  隨 app 提供、但不屬於 renderer bundle 的 runtime resources
 public/     Vite 固定 URL 靜態資產
 build/      Installer resources 與 NSIS hooks
 docs/       產品、架構、ADR、contracts、研究與發行文件
+public-repo/ 公開 repo 的 README、SECURITY 原稿，發版時同步
 scripts/    驗證、benchmark、release 與 startup 工具
 tools/      發布維護工具
 ```

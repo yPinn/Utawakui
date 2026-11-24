@@ -69,7 +69,8 @@ exist.
 
 ## Consequences
 
-The public release repository holds only README, LICENSE, SECURITY and releases,
+The public release repository holds only README, LICENSE, SECURITY, third-party
+notices and releases,
 and changes rarely. The site, the Release notes and the in-app announcement carry
 version-specific information. The project now maintains a second Cloudflare
 project and a site deployment workflow. Both GitHub and Cloudflare log visitor

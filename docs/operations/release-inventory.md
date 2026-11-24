@@ -256,7 +256,8 @@ dependencies. Release steps live in the [release runbook](release-runbook.md).
 
 - Private source stays in `yPinn/Utawakui`; installers and the update feed are
   published only as GitHub Release assets in `yPinn/Utawakui-Releases`. The
-  release workflow uploads assets; it does not push source or repository files.
+  release workflow also syncs `public-repo/`, `LICENSE.md` and
+  `THIRD_PARTY_NOTICES.md` to that repository; it never pushes source.
 - No repository, signing or CI credential is packaged.
 - App data, app-managed dependencies and the selected media library stay outside
   the installer payload and survive updates.

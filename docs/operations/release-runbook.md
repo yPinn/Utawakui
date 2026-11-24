@@ -56,7 +56,9 @@ filename, packaged version, installer name and update metadata must all agree.
    sign `update-manifest.json`. The `draft` job, in the `release` environment, re-verifies the bundle and
    creates or updates a **draft** in `yPinn/Utawakui-Releases` with the installer,
    blockmap, `latest.yml`, `SHA256SUMS.txt` and manifest. It refuses to modify a
-   published release or a prerelease.
+   published release or a prerelease. It then syncs `public-repo/`,
+   `LICENSE.md` and `THIRD_PARTY_NOTICES.md` to the public repository, committing
+   only files that differ; links to private files become plain text.
 4. **Accept and publish.** Install from the draft and complete
    [Acceptance Before Publish](#acceptance-before-publish). Then run
    `npm run release:publish <version>` to check the draft's assets, and rerun it

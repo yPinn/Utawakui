@@ -58,7 +58,9 @@ verification as the accepted current product boundary.
 - Private source and CI remain in `yPinn/Utawakui`.
 - Public update artifacts use `yPinn/Utawakui-Releases`. Its identity is fixed
   in the builder configuration and embedded in packaged `app-update.yml`.
-- The public repository contains only minimal release-repository content,
+- The public repository contains only minimal release-repository content (its
+  source is `public-repo/` plus the license and notices, synced by the release
+  workflow),
   release tags, release notes, and binary assets. GitHub automatically exposes
   source archives for its own tagged commit, so private application source must
   never be pushed into this repository.

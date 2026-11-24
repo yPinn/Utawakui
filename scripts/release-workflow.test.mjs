@@ -324,6 +324,22 @@ describe('release workflow', () => {
     expect(steps.some((step) => step.run === 'npm run lint:commit')).toBe(true);
   });
 
+  it('syncs public repository files after the draft with the release token', () => {
+    const steps = readWorkflow().jobs.draft.steps;
+    const draftIndex = steps.findIndex(
+      (step) => step.name === 'Create or update public draft release',
+    );
+    const syncIndex = steps.findIndex(
+      (step) => step.name === 'Sync public repository files',
+    );
+
+    expect(syncIndex).toBeGreaterThan(draftIndex);
+    expect(steps[syncIndex].run).toContain('scripts/public-repo-sync.mjs');
+    expect(steps[syncIndex].env.GH_TOKEN).toBe(
+      '${{ secrets.PUBLIC_RELEASE_TOKEN }}',
+    );
+  });
+
   it('bounds release jobs and retains only short-lived failure diagnostics', () => {
     for (const filename of ['release.yml']) {
       const workflow = readWorkflow(filename);

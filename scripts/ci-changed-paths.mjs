@@ -43,6 +43,7 @@ const WINDOWS_PACKAGE_PATTERNS = [
 
 const QUALITY_ONLY_PATTERNS = [
   /^public\//u,
+  /^public-repo\//u,
   /^src\//u,
   /^commitlint\.config\.js$/u,
   /^eslint\.config\.js$/u,

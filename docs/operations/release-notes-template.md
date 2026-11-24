@@ -8,66 +8,33 @@ copying the commit log or describing how the software is built.
 
 ## Section Rules
 
-- Keep versioned notes ready for direct publication even while the GitHub Release
-  is a draft awaiting manual review. Do not add draft status, pending review,
-  planned-delivery claims or release-process instructions to the public copy.
-  Keep workflow state and unfinished acceptance in internal operations records;
-  retain accurate user-facing known limitations in the notes.
-- The versioned Chinese and English titles, their short summaries, and both
-  installation sections are required.
-- Copy the Chinese and English short summaries verbatim into
-  `shared/releaseAnnouncement.json`'s `summary` (keyed `zh-TW` and `en-US`), and
-  bump its `version` to match. The modal shows the one for the UI language. That file drives the in-app
-  "what's new" modal (see `src/composables/useAppAnnouncement.js`), so the first
-  thing a user reads after updating must match the top of this document — not a
-  second, independently drifting sentence. `shared/releaseAnnouncement.test.js`
-  checks both the package version and exact agreement with both
-  introductions. Run that test when changing the introduction or its layout,
-  together with the release-contract and release-workflow tests.
-- Prefer everyday language and short sentences. Avoid internal library, model,
-  format, component, pipeline, lifecycle, and protocol names unless the term is
-  visible in the product and helps the reader act.
-- Keep at least one matching change category in both languages. Include **New
-  Features**, **Improvements**, and **Bug Fixes** only when that category has
-  content; remove empty categories.
-- Include **Upgrade Notes** when an existing user must take an action or when data,
-  settings, compatibility, or update behavior changes.
-- Include **Known Limitations** for material constraints that remain in the shipped
-  artifact. Do not disguise a limitation as an improvement. This section is
-  otherwise optional, but stays required for as long as public builds ship
-  unsigned: it is the one place that carries the unsigned-publisher disclosure.
-  Drop it only after Authenticode signing lands (see Future Authenticode Signing
-  in the release runbook).
-- **A Note from the Developer** is optional. When used, keep the Chinese and English
-  sections together and write the message as a blockquote. It may add gratitude,
-  context, or personality, but must not be the only place for upgrade steps,
-  security disclosures, known limitations, or other required information.
-- Keep the unsigned-publisher disclosure, official download location, checksum,
-  update behavior, data-retention guidance, and user-provided-media rights current
-  in every public-test note. State each disclosure once, briefly, with its
-  practical effect or next action — the unsigned-publisher disclosure belongs in
-  Known Limitations; the other four belong in Before Installing.
-- Include the community Discord invite (`https://discord.gg/yJKddEtpNt`) in
-  Before Installing so the public release page carries the same
-  announcements/feedback channel as the in-app Settings entry. This is a
-  recommended inclusion, not a required disclosure like the five above.
+- Notes are publication-ready even while the GitHub Release is a draft: no draft
+  status, pending review, planned delivery or process instructions. Unfinished
+  acceptance belongs in internal records; real limitations stay in the notes.
+- Required: both versioned titles with a one- or two-sentence summary, at least
+  one matching change category (**New Features**, **Improvements**, **Bug
+  Fixes**) and both install sections. Remove empty optional sections; keep
+  Chinese and English sections paired.
+- Copy both summaries verbatim into `shared/releaseAnnouncement.json`, which
+  drives the in-app "what's new" modal. `shared/releaseAnnouncement.test.js`
+  checks the version and exact agreement.
+- **Before Installing** carries the fixed disclosures, one short line each:
+  official download and checksum, Unknown publisher, update behavior, settings
+  and library retention, rights to user-supplied media, and the Discord invite.
+  `release:prepare` copies them from the previous release; edit only what changed.
+- **Upgrade Notes** is for actions an existing user must take or changes to data,
+  settings, compatibility or update behavior. **Known Limitations** lists material
+  constraints that ship in this build. **A Note from the Developer** is an
+  optional blockquote and never the only place for required information.
+- Write for readers with no engineering background: say what people can do,
+  notice or need to act on. Avoid internal library, model, format, component or
+  protocol names unless the product shows them.
 
-Conventional Commit types are source evidence, not release-note copy:
-
-- `feat` usually maps to **New Features**;
-- `fix` maps to **Bug Fixes**;
-- user-visible `perf`, `refactor`, `build`, or operational changes may map to
-  **Improvements**;
-- internal-only `docs`, `test`, `ci`, and refactors are normally omitted.
-
-Translate source evidence into reader outcomes. For example:
-
-- write “The app can check for later releases and guide the download and install”
-  instead of “Added update metadata”;
-- write “Improved regular vocal-separation quality” instead of naming an internal
-  model or recipe;
-- write “OBS previews refresh more reliably after changes” instead of describing
-  component remounts or lifecycle handling.
+Commit types are evidence, not copy: `feat` usually maps to New Features, `fix`
+to Bug Fixes, and user-visible `perf`, `refactor` or `build` changes to
+Improvements; internal `docs`, `test` and `ci` work is omitted. For example, write
+"OBS previews refresh more reliably after changes" instead of describing component
+remounts.
 
 ## Copy Template
 
@@ -102,16 +69,15 @@ Translate source evidence into reader outcomes. For example:
 
 - <手動步驟、相容性、資料或設定影響。>
 
-<!-- 目前必須保留：需含未簽章揭露；正式簽章上線後視情況精簡或移除本段。 -->
+<!-- 選填；本版仍有影響使用的限制時保留。 -->
 
 ## 已知限制
 
-- <此測試版本尚未加上受信任的 Windows 數位簽章，安裝時可能顯示「未知的發行者」。>
-- <其他限制、影響及可行的因應方式，選填。>
+- <限制、影響及可行的因應方式。>
 
 ## 安裝前須知
 
-- <官方下載位置與 checksum 驗證方式。>
+- <官方下載位置、checksum 驗證方式，以及「未知的發行者」提示。>
 - <更新是否自動，以及哪些步驟需要明確操作。>
 - <覆蓋安裝、設定、曲庫與自備素材的保留／備份說明。>
 - <使用者自備素材的權利責任。>
@@ -150,18 +116,16 @@ Translate source evidence into reader outcomes. For example:
 
 - <Manual steps or compatibility, data, or settings impact.>
 
-<!-- Currently required: must include the unsigned-publisher disclosure; may be
-     trimmed or removed once Authenticode signing lands. -->
+<!-- Optional; keep when a limitation affects use of this build. -->
 
 ## Known Limitations
 
-- <This test build does not yet have a trusted Windows digital signature, so
-  Windows may show "Unknown publisher.">
-- <Other limitation, impact, and available workaround — optional.>
+- <Limitation, impact, and available workaround.>
 
 ## Before Installing
 
-- <Official download location and checksum verification.>
+- <Official download location, checksum verification, and the "Unknown
+  publisher" prompt.>
 - <Update behavior and steps that require explicit action.>
 - <Installation, settings, library, and user-media retention or backup guidance.>
 - <User responsibility for rights to supplied media.>

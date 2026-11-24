@@ -20,7 +20,7 @@ describe('CI changed-path policy', () => {
     },
     {
       name: 'renderer changes need quality checks but not packaging',
-      paths: ['src/App.vue', 'public/icon.svg'],
+      paths: ['src/App.vue', 'public/icon.svg', 'public-repo/README.md'],
       expected: {
         dependencyAudit: false,
         quality: true,

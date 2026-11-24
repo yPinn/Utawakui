@@ -195,7 +195,7 @@ migrate feature by feature, so new or edited text follows these rules now:
 ## Markdown Conventions
 
 Applies to documents whose primary audience is an end user reading for context or
-instructions — currently `docs/releases/v<version>.md`. The private `README.md` is
+instructions — currently `public-repo/README.md` and `docs/releases/v<version>.md`. The private `README.md` is
 for developers. Internal status/reference docs (`README.md`, `docs/spec.md`,
 `docs/architecture.md`, `docs/README.md`, ADRs, contracts, operations runbooks)
 stay plain prose and tables; do not add this styling to them just for decoration.

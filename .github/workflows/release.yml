@@ -393,6 +393,11 @@ jobs:
               --notes-file "$notes"
           fi
 
+      - name: Sync public repository files
+        env:
+          GH_TOKEN: ${{ secrets.PUBLIC_RELEASE_TOKEN }}
+        run: node scripts/public-repo-sync.mjs --version "$RELEASE_VERSION"
+
       - name: Upload failed release recovery bundle
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
