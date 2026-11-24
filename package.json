@@ -23,6 +23,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage && node scripts/coverageRatchet.js",
+    "test:linux": "node scripts/linux-vitest.mjs",
     "test:settings-layout": "npm run build && node scripts/settings-window-layout-probe.mjs",
     "build:runtime": "node scripts/build-release-runtime.mjs",
     "electron:install": "install-electron",

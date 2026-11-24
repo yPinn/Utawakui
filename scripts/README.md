@@ -6,7 +6,7 @@
 
 - `npm run dev` 啟動桌面開發環境。`npm run dev:tools` 同時開啟 Chromium DevTools，`npm run dev:pseudo` 以假語系檢查翻譯版面。
 - `npm run check` 依序檢查程式碼、Markdown 與格式。也可單跑 `npm run lint`、`npm run lint:md` 或 `npm run format:check`。需要套用修正時用 `npm run lint:fix` 或 `npm run format`。
-- `npm test` 執行自動測試。`npm run test:watch` 持續監看變更，`npm run test:coverage` 加上覆蓋率門檻。
+- `npm test` 執行自動測試。`npm run test:watch` 持續監看變更，`npm run test:coverage` 加上覆蓋率門檻。`npm run test:linux -- <測試檔>` 在 Linux 容器內執行測試，與 CI 的 Ubuntu 環境一致；需要 Docker，用法見 [CI 手冊](../docs/operations/ci-usage.md#cross-platform-tests)。
 - `npm run build` 建置 renderer。`npm start` 建置後啟動桌面程式。
 - `npm run clean` 清除可重建的建置、覆蓋率、Vite 快取與封裝產物。執行前先確認沒有仍在使用的封裝或驗證產物。
 
