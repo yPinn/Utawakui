@@ -1,5 +1,4 @@
 import { EventEmitter } from 'node:events';
-import fs from 'node:fs';
 import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { expandZipArchive, validateZipArchiveBuffer } from './archive.js';
@@ -220,7 +219,7 @@ describe('expandZipArchive', () => {
     await expect(pending).resolves.toBeUndefined();
 
     const [command, args, spawnOptions] = spawnImpl.mock.calls[0];
-    expect(path.basename(command).toLowerCase()).toBe('powershell.exe');
+    expect(path.win32.basename(command).toLowerCase()).toBe('powershell.exe');
     expect(args).toContain('-NoProfile');
     expect(args.at(-1)).toContain('$env:UTAWAKUI_ARCHIVE_PATH');
     expect(args).not.toContain('C:\\cache\\tool.zip');
@@ -230,8 +229,7 @@ describe('expandZipArchive', () => {
     });
   });
 
-  it('uses the Windows PowerShell executable when it exists', async () => {
-    vi.spyOn(fs, 'existsSync').mockReturnValue(true);
+  it('always uses the System32 Windows PowerShell executable', async () => {
     const proc = createProcessDouble();
     const spawnImpl = vi.fn(() => proc);
     const pending = expandZipArchive(
@@ -247,7 +245,12 @@ describe('expandZipArchive', () => {
     await pending;
 
     expect(spawnImpl.mock.calls[0][0]).toContain(
-      path.join('System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe'),
+      path.win32.join(
+        'System32',
+        'WindowsPowerShell',
+        'v1.0',
+        'powershell.exe',
+      ),
     );
   });
 
