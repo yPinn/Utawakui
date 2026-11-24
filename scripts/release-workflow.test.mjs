@@ -43,7 +43,7 @@ describe('release workflow', () => {
     const workflow = readWorkflow();
     const packageJob = workflow.jobs.package;
     const signJob = workflow.jobs.sign;
-    const publishJob = workflow.jobs.publish;
+    const draftJob = workflow.jobs.draft;
 
     expect(workflow.permissions).toEqual({ contents: 'read' });
     expect(packageJob).not.toHaveProperty('environment');
@@ -59,20 +59,20 @@ describe('release workflow', () => {
     );
     expect(JSON.stringify(signJob)).not.toContain('PUBLIC_RELEASE_TOKEN');
 
-    expect(publishJob.environment).toBe('release');
-    expect(publishJob.needs).toEqual(['validate', 'package', 'sign']);
-    const accessStep = publishJob.steps.find(
+    expect(draftJob.environment).toBe('release');
+    expect(draftJob.needs).toEqual(['validate', 'package', 'sign']);
+    const accessStep = draftJob.steps.find(
       (step) => step.name === 'Verify public release access',
     );
-    const publishStep = publishJob.steps.find(
+    const draftStep = draftJob.steps.find(
       (step) => step.name === 'Create or update public draft release',
     );
 
     expect(JSON.stringify(workflow.jobs)).not.toContain('WINDOWS_CERTIFICATE');
     expect(JSON.stringify(workflow.jobs)).not.toContain('CSC_');
     expect(accessStep.env.GH_TOKEN).toContain('secrets.PUBLIC_RELEASE_TOKEN');
-    expect(publishStep.env.GH_TOKEN).toContain('secrets.PUBLIC_RELEASE_TOKEN');
-    expect(JSON.stringify(publishJob)).not.toContain(
+    expect(draftStep.env.GH_TOKEN).toContain('secrets.PUBLIC_RELEASE_TOKEN');
+    expect(JSON.stringify(draftJob)).not.toContain(
       'UPDATE_MANIFEST_PRIVATE_KEY_B64',
     );
   });
@@ -109,11 +109,7 @@ describe('release workflow', () => {
   });
 
   it('pins Node 24 actions and Gitleaks to immutable references', () => {
-    for (const filename of [
-      'ci.yml',
-      'public-test-release.yml',
-      'release.yml',
-    ]) {
+    for (const filename of ['ci.yml', 'release.yml']) {
       const workflowText = fs.readFileSync(
         path.join(rootDirectory, '.github/workflows', filename),
         'utf8',
@@ -155,7 +151,7 @@ describe('release workflow', () => {
   });
 
   it('avoids ambiguous PowerShell variable interpolation before colons', () => {
-    for (const filename of ['public-test-release.yml', 'release.yml']) {
+    for (const filename of ['release.yml']) {
       const workflowText = fs.readFileSync(
         path.join(rootDirectory, '.github/workflows', filename),
         'utf8',
@@ -170,7 +166,7 @@ describe('release workflow', () => {
   it('builds without builder publishing and only creates a reviewed public draft', () => {
     const workflow = readWorkflow();
     const packageCommands = JSON.stringify(workflow.jobs.package.steps);
-    const publishCommands = JSON.stringify(workflow.jobs.publish.steps);
+    const draftCommands = JSON.stringify(workflow.jobs.draft.steps);
     const packageJson = JSON.parse(
       fs.readFileSync(path.join(rootDirectory, 'package.json'), 'utf8'),
     );
@@ -197,9 +193,9 @@ describe('release workflow', () => {
     expect(packageVerifier).toContain('--directory $releaseDirectory');
     expect(packageVerifier).toContain('SHA256SUMS.txt');
     expect(packageCommands).not.toContain('gh release');
-    expect(publishCommands).toContain('gh release create');
-    expect(publishCommands).toContain('--draft');
-    expect(publishCommands).toContain(
+    expect(draftCommands).toContain('gh release create');
+    expect(draftCommands).toContain('--draft');
+    expect(draftCommands).toContain(
       'Refusing to modify an already published release',
     );
     expect(packageVerifier).toContain('LICENSE.md');
@@ -208,11 +204,11 @@ describe('release workflow', () => {
   });
 
   itWithBash('keeps the public draft step valid Bash', () => {
-    const publishStep = readWorkflow().jobs.publish.steps.find(
+    const draftStep = readWorkflow().jobs.draft.steps.find(
       (step) => step.name === 'Create or update public draft release',
     );
     const result = spawnSync('bash', ['-n'], {
-      input: publishStep.run,
+      input: draftStep.run,
       encoding: 'utf8',
     });
 
@@ -221,11 +217,11 @@ describe('release workflow', () => {
     expect(result.status).toBe(0);
   });
 
-  it('moves one package artifact through optional signing and mandatory pre-publish verification', () => {
+  it('moves one package artifact through optional signing and mandatory pre-draft verification', () => {
     const workflow = readWorkflow();
     const packageSteps = workflow.jobs.package.steps;
     const signSteps = workflow.jobs.sign.steps;
-    const publishSteps = workflow.jobs.publish.steps;
+    const draftSteps = workflow.jobs.draft.steps;
     const packageUpload = packageSteps.find(
       (step) => step.name === 'Upload verified updater bundle',
     );
@@ -235,13 +231,13 @@ describe('release workflow', () => {
     const manifestUpload = signSteps.find(
       (step) => step.name === 'Upload signed update manifest',
     );
-    const publishDownload = publishSteps.find(
+    const draftDownload = draftSteps.find(
       (step) => step.name === 'Download verified updater bundle',
     );
-    const verifyStep = publishSteps.find(
+    const verifyStep = draftSteps.find(
       (step) => step.name === 'Verify signed update manifest',
     );
-    const bundleVerifyStep = publishSteps.find(
+    const bundleVerifyStep = draftSteps.find(
       (step) => step.name === 'Verify downloaded updater bundle',
     );
     const signVerifyStep = signSteps.find(
@@ -250,7 +246,7 @@ describe('release workflow', () => {
 
     expect(packageUpload.with.name).toContain('needs.validate.outputs.version');
     expect(signDownload.with.name).toBe(packageUpload.with.name);
-    expect(publishDownload.with.name).toBe(packageUpload.with.name);
+    expect(draftDownload.with.name).toBe(packageUpload.with.name);
     expect(manifestUpload.with.path).toContain('update-manifest.json');
     expect(JSON.stringify(verifyStep)).toContain(
       'tools/update-signing/verify-manifest.mjs',
@@ -263,9 +259,9 @@ describe('release workflow', () => {
       'release-contract-cli.mjs artifacts',
     );
     expect(bundleVerifyStep.run).toContain('sha256sum --check');
-    expect(JSON.stringify(publishSteps)).toContain('npm ci --ignore-scripts');
-    expect(workflow.jobs.publish.env.ACTIVE_KEY_ID).toContain('active_key_id');
-    expect(workflow.jobs.publish.env.RETIRING_KEY_ID).toContain(
+    expect(JSON.stringify(draftSteps)).toContain('npm ci --ignore-scripts');
+    expect(workflow.jobs.draft.env.ACTIVE_KEY_ID).toContain('active_key_id');
+    expect(workflow.jobs.draft.env.RETIRING_KEY_ID).toContain(
       'retiring_key_id',
     );
     expect(workflow.jobs.validate.outputs.retiring_key_id).toContain(
@@ -281,31 +277,31 @@ describe('release workflow', () => {
     );
   });
 
-  it('keeps public releases manual and routes tags to unsigned review builds', () => {
+  it('runs on stable tags and keeps manual reruns bound to the selected tag', () => {
     const releaseWorkflow = readWorkflow();
-    const testWorkflow = readWorkflow('public-test-release.yml');
     const validateSteps = releaseWorkflow.jobs.validate.steps;
     const guardStep = validateSteps[0];
 
-    expect(releaseWorkflow.on).not.toHaveProperty('push');
+    expect(releaseWorkflow.on.push.tags).toEqual(['v*.*.*']);
+    expect(releaseWorkflow.on.push).not.toHaveProperty('branches');
     expect(releaseWorkflow.on.workflow_dispatch.inputs.tag.required).toBe(true);
-    expect(guardStep.name).toBe('Require workflow dispatched from release tag');
+    expect(releaseWorkflow.env.RELEASE_TAG).toContain('github.ref_name');
+    expect(releaseWorkflow.env.RELEASE_TAG).toContain('inputs.tag');
+    expect(guardStep.name).toBe('Require workflow run from release tag');
     expect(JSON.stringify(guardStep)).toContain('github.ref_type');
     expect(JSON.stringify(guardStep)).toContain('github.ref_name');
     expect(
       validateSteps.findIndex((step) => step.uses?.includes('checkout')),
     ).toBe(1);
-    expect(testWorkflow.on.push.tags).toEqual(['v*.*.*']);
-    expect(testWorkflow.on.workflow_dispatch.inputs.tag.required).toBe(true);
-    expect(testWorkflow.jobs.package.needs).toBe('validate');
-    expect(testWorkflow.jobs.validate.outputs.version).toContain(
-      'release-version',
-    );
+    expect(
+      fs.existsSync(
+        path.join(rootDirectory, '.github/workflows/public-test-release.yml'),
+      ),
+    ).toBe(false);
   });
 
   it.each([
     ['ci.yml', 'windows-package'],
-    ['public-test-release.yml', 'package'],
     ['release.yml', 'package'],
   ])(
     'installs the pinned Electron binary before packaging in %s',
@@ -323,40 +319,13 @@ describe('release workflow', () => {
     },
   );
 
-  it.each(['public-test-release.yml', 'release.yml'])(
-    'uses the commit lint entry point in %s',
-    (filename) => {
-      const { steps } = readWorkflow(filename).jobs.validate;
-      expect(steps.some((step) => step.run === 'npm run lint:commit')).toBe(
-        true,
-      );
-    },
-  );
-
-  it('keeps tag builds private but includes the complete updater bundle for review', () => {
-    const workflow = readWorkflow('public-test-release.yml');
-    const packageSteps = workflow.jobs.package.steps;
-    const packageCommands = JSON.stringify(packageSteps);
-    const uploadStep = packageSteps.find(
-      (step) => step.name === 'Upload unsigned test bundle',
-    );
-
-    expect(workflow.jobs.package.needs).toBe('validate');
-    expect(workflow.jobs.package).not.toHaveProperty('environment');
-    expect(packageCommands).not.toContain('secrets.');
-    expect(packageCommands).not.toContain('gh release');
-    expect(packageCommands).toContain(
-      'scripts/verify-unsigned-windows-package.ps1',
-    );
-    expect(packageCommands).toContain('-WriteChecksum');
-    expect(uploadStep.with.path).toContain('SHA256SUMS.txt');
-    expect(uploadStep.with.path).toContain('latest.yml');
-    expect(uploadStep.with.path).toContain('.blockmap');
-    expect(uploadStep.with['retention-days']).toBe(7);
+  it('uses the commit lint entry point', () => {
+    const { steps } = readWorkflow().jobs.validate;
+    expect(steps.some((step) => step.run === 'npm run lint:commit')).toBe(true);
   });
 
   it('bounds release jobs and retains only short-lived failure diagnostics', () => {
-    for (const filename of ['public-test-release.yml', 'release.yml']) {
+    for (const filename of ['release.yml']) {
       const workflow = readWorkflow(filename);
 
       for (const job of Object.values(workflow.jobs)) {
@@ -373,16 +342,16 @@ describe('release workflow', () => {
     }
 
     const releaseWorkflow = readWorkflow();
-    const publishSteps = releaseWorkflow.jobs.publish.steps;
-    const publishIndex = publishSteps.findIndex(
+    const draftSteps = releaseWorkflow.jobs.draft.steps;
+    const draftIndex = draftSteps.findIndex(
       (step) => step.name === 'Create or update public draft release',
     );
-    const recoveryIndex = publishSteps.findIndex(
+    const recoveryIndex = draftSteps.findIndex(
       (step) => step.name === 'Upload failed release recovery bundle',
     );
-    const recoveryStep = publishSteps[recoveryIndex];
+    const recoveryStep = draftSteps[recoveryIndex];
 
-    expect(recoveryIndex).toBeGreaterThan(publishIndex);
+    expect(recoveryIndex).toBeGreaterThan(draftIndex);
     expect(recoveryStep.if).toContain('failure()');
     expect(recoveryStep.with['retention-days']).toBe(3);
     expect(recoveryStep.with['if-no-files-found']).toBe('ignore');

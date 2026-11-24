@@ -33,85 +33,46 @@ and update files, `npm run package:unpacked` to build a runnable directory, and
 option uses local credentials when available. See the [command guide](../../scripts/README.md)
 for the development and verification commands.
 
-## Prepare A Version
+## Release Flow
 
-1. Update `package.json` and `package-lock.json` to the same new stable version.
-2. Copy the [release-notes template](release-notes-template.md) to
-   `docs/releases/v<version>.md`. Keep matching Chinese／English change categories,
-   write for broad readers without assumed engineering knowledge, remove empty
-   optional sections, and retain concise unsigned-publisher, official-download,
-   update-behavior, and data-retention guidance. Keep the text ready for direct
-   publication; track unfinished acceptance separately and do not insert draft
-   status or planned-delivery wording into the announcement.
-3. Run the normal CI checks and Windows package/startup acceptance.
-4. Commit the release source on `main`, then create the exact tag `v<version>`.
-5. Never reuse a published version. Correct a failed release with a higher version.
+A release has three human steps: push the tag, approve signing, and publish after
+acceptance. Never reuse a published version; fix a failed release with a higher
+one. `package.json.version` is the source of truth, and the tag, lockfile, notes
+filename, packaged version, installer name and update metadata must all agree.
 
-`package.json.version` is the release source of truth. The tag, lockfile, release
-note filename, packaged executable version, installer name and update metadata must
-all agree.
+1. **Prepare.** Run `npm run release:prepare <version>`. It updates `package.json`
+   and the lockfile, creates `docs/releases/v<version>.md` from the
+   [release-notes template](release-notes-template.md) with the previous install
+   guidance carried over, and resets `shared/releaseAnnouncement.json`. Fill every
+   `<...>` placeholder (the release contract rejects leftovers) and copy both short
+   summaries into the announcement. Notes stay ready for direct publication: no
+   draft status or planned-delivery wording.
+2. **Tag.** After ordinary CI passes, commit on `main`, create the exact tag
+   `v<version>` and push it. This starts `.github/workflows/release.yml`.
+3. **Approve signing.** The workflow validates the tag (reachable from `main`,
+   secret scan, audit, license inventory, lint, format, Markdown, tests with
+   coverage, build), packages and verifies the unsigned bundle in a no-secret
+   Windows job, then waits for approval of the `update-signing` environment to
+   sign `update-manifest.json`. The `draft` job, in the `release` environment, re-verifies the bundle and
+   creates or updates a **draft** in `yPinn/Utawakui-Releases` with the installer,
+   blockmap, `latest.yml`, `SHA256SUMS.txt` and manifest. It refuses to modify a
+   published release or a prerelease.
+4. **Accept and publish.** Install from the draft and complete
+   [Acceptance Before Publish](#acceptance-before-publish). Then run
+   `npm run release:publish <version>` to check the draft's assets, and rerun it
+   with `--confirm` to publish it as the stable latest release.
 
-## Public Test Build
+To rebuild an existing tag, dispatch the workflow with that tag selected in **Use
+workflow from** and entered as the `tag` input; a mismatch fails before checkout.
+Package-transfer and failed-recovery artifacts are kept for at most 3 days.
 
-Pushing a stable tag starts `.github/workflows/public-test-release.yml`.
-Manual dispatch may rebuild an existing tag without publishing it.
+Signing and publishing never share a job. `PUBLIC_RELEASE_TOKEN` is a fine-grained
+token limited to `yPinn/Utawakui-Releases` with contents read/write and exists only
+in the `release` environment.
 
-The workflow:
-
-1. Confirms the tag commit is reachable from `main`.
-2. Runs secret, dependency, license, lint, formatting, Markdown, test and build checks.
-3. Builds the unsigned installer and verifies installer／executable status and version.
-4. Verifies packaged notices plus installer, blockmap and `latest.yml` contracts.
-5. Produces `SHA256SUMS.txt`.
-6. Uploads a private CI artifact containing the installer, blockmap, update metadata,
-   checksum and release notes for 7 days.
-7. Does not contact or modify the public release repository.
-
-Use this artifact for installed-package, startup, data-retention and update-metadata
-review before creating a public draft.
-
-For a local read-only preview of the ordinary CI installation plan:
-
-```powershell
-npm run release:verify-installed -- -ToVersion <version> -PlanOnly
-```
-
-Do not add `-AllowLocalMachineMutation` on a developer workstation that contains
-real Utawakui state. The ordinary CI runner is the supported mutation surface.
-
-## Public Draft Workflow
-
-`.github/workflows/release.yml` is manual-only. It separates validation, packaging,
-optional manifest signing and publishing so one job never receives both a signing
-key and the public-repository token.
-
-| Name                   | Scope                                                                                        |
-| ---------------------- | -------------------------------------------------------------------------------------------- |
-| `PUBLIC_RELEASE_TOKEN` | Fine-grained token limited to `yPinn/Utawakui-Releases` with repository contents read/write. |
-
-In the workflow dispatch form, select the exact release tag in **Use workflow
-from** and enter that same tag in the `tag` input. The first validation step rejects
-`main`, a branch, or a mismatched tag before checkout, dependency installation or
-packaging consumes additional runner time.
-
-The no-secret Windows package job repeats validation, creates the same unsigned
-updater bundle and uploads it as a 3-day workflow artifact. The protected `release`
-job downloads and re-verifies that exact bundle, then creates or updates a **draft**
-stable release containing:
-
-- `Utawakui-Setup-<version>.exe`;
-- installer blockmap;
-- `latest.yml`;
-- `SHA256SUMS.txt`.
-
-When `signedManifestEnabled` is true, a separate protected `update-signing` job
-adds `update-manifest.json` before publish. The flag is true and the registry has
-one production active key, so every release must pass this job and needs a reviewer
-to approve the `update-signing` deployment.
-
-It refuses to modify a published release or use a prerelease as the stable updater
-feed. The workflow never publishes the draft automatically. Package-transfer and
-failed-recovery artifacts are retained for at most 3 days.
+For a local read-only preview of the CI installation plan, run
+`npm run release:verify-installed -- -ToVersion <version> -PlanOnly`. Do not add
+`-AllowLocalMachineMutation` on a workstation with real Utawakui state.
 
 ## Signed Manifest Rotation And Recovery
 

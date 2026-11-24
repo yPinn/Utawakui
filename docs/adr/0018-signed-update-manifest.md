@@ -82,12 +82,12 @@ threshold policy, metadata expiry or freeze-attack protection.
    `update-signing` environment. It may read the active signing key and one optional
    retiring-key secret, but cannot read the publish token. Once the registry declares
    a retiring production key, that secret and its verified signature are mandatory.
-4. `publish` runs behind the `release` environment. It re-verifies the downloaded
+4. `draft` runs behind the `release` environment. It re-verifies the downloaded
    bundle and signed manifest, may read `PUBLIC_RELEASE_TOKEN`, and cannot read a
    signing key.
 
 The workflow creates only a draft. With the gate enabled, `sign` must succeed
-before `publish` runs.
+before `draft` runs.
 
 ## Rotation And Recovery
 

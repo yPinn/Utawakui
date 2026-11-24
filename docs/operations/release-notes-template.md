@@ -1,6 +1,7 @@
 # Release Notes Template
 
-Use this template for `docs/releases/v<version>.md`. Public notes are bilingual and
+`npm run release:prepare <version>` creates `docs/releases/v<version>.md` from the
+copy block below and carries over the previous install guidance. Public notes are bilingual and
 written for broad readers with no assumed engineering background. Explain what
 people can do, what they may notice, and what action they need to take instead of
 copying the commit log or describing how the software is built.

@@ -116,6 +116,13 @@ export function verifyReleaseNotes(notesPath) {
     throw new Error(`[release] Missing release notes: ${notesPath}`);
   }
   assertContract(notes.trim().length > 0, 'release notes must not be empty');
+  const placeholder = notes
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .match(/<(?!https?:\/\/)[^>\n]+>/);
+  assertContract(
+    !placeholder,
+    `release notes still contain a template placeholder: ${placeholder?.[0]}`,
+  );
 
   const filenameMatch = /^v(\d+\.\d+\.\d+)\.md$/.exec(path.basename(notesPath));
   assertContract(

@@ -236,7 +236,7 @@ network install or signed-installer acceptance; see the
   uploaded nor published; only bounded installed-acceptance evidence is retained
   for 7 days. Tag/release workflows additionally use the verifier to write
   `SHA256SUMS.txt`. Public-test bundles expire after 7 days. The release workflow
-  uses a 3-day artifact to pass the package into isolated sign／publish jobs;
+  uses a 3-day artifact to pass the package into isolated sign／draft jobs;
   failed recovery bundles also expire after 3 days. The sign job is skipped while
   the production signed-manifest gate is disabled.
 

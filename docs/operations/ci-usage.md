@@ -156,8 +156,8 @@ out after 30 minutes.
 
 Audits precede `npm ci`. Every run gates shipped dependencies with
 `npm run audit:prod` (high and above) regardless of scope, so a new advisory
-blocks even a docs-only change; dependency changes and every public-test or
-release candidate also run `npm run audit:all`. Lower severities stay with
+blocks even a docs-only change; dependency changes and every release
+candidate also run `npm run audit:all`. Lower severities stay with
 GitHub dependency alerts.
 
 The weekly `dependency-security.yml` catches advisories against an unchanged
@@ -169,9 +169,9 @@ PyPI wheels; Python, bgutil and FFmpeg are listed for manual review).
 
 - Successful ordinary CI does not upload coverage. Failed coverage runs retain the
   report for 7 days.
-- Public-test updater bundles are private review artifacts retained for 7 days.
-- A successful release writes assets to the public draft and does not duplicate
-  them in Actions storage. A failed release may retain a recovery bundle for 3 days.
+- A release passes its updater bundle between jobs as a 3-day artifact and writes
+  the final assets only to the public draft. A failed release may retain a
+  recovery bundle for 3 days.
 - Ordinary Windows packages are verification-only and are neither uploaded nor
   published.
 - Workflow permissions remain `contents: read`; public release credentials remain
@@ -191,11 +191,12 @@ PyPI wheels; Python, bgutil and FFmpeg are listed for manual review).
 Existing artifacts are not deleted by this policy change. They expire according to
 the retention configured on the run that created them.
 
-## Release Dispatch Guard
+## Release Trigger Guard
 
-For `.github/workflows/release.yml`, select the exact release tag in **Use workflow
-from** and enter the same value in the `tag` input. A branch ref or mismatch fails
-in the first step, before checkout, dependency installation and Windows packaging.
+`.github/workflows/release.yml` runs on stable `v*.*.*` tag pushes. A manual rerun
+must select the exact tag in **Use workflow from** and enter the same value in the
+`tag` input; a branch ref or mismatch fails in the first step, before checkout,
+dependency installation and Windows packaging.
 
 ## Rollback And Observation
 

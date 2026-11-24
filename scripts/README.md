@@ -14,6 +14,7 @@
 
 - `npm run electron:install` 準備鎖定版本的 Electron 執行檔。`npm run build:runtime` 可獨立重建正式 runtime，封裝時也會自動重建。
 - `npm run package` 產生未簽署的 Windows 安裝與更新檔。`npm run package:unpacked` 只產生可直接啟動的目錄。`npm run package:signing` 啟用選用的 Authenticode 簽署設定。三個入口都只產出本機檔案。
+- `npm run release:prepare <version>` 更新版號並建立發行說明草稿；`npm run release:publish <version> [--confirm]` 檢查公開 draft，加 `--confirm` 才發布。
 - `npm run release:verify-version`、`npm run release:verify-artifacts`、`npm run release:verify-installed` 分別檢查版號、發版產物及實際安裝。參數與流程見[發行手冊](../docs/operations/release-runbook.md)。
 - `npm run lint:commit` 檢查最近一筆 commit。CI 的提交範圍與 `audit:prod`、`audit:all`、`audit:runtime` 執行條件見 [CI 手冊](../docs/operations/ci-usage.md)。
 - `npm run license:inventory` 產生依賴清單。`npm run license:verify` 驗證第三方聲明，`npm run license:write` 重建聲明。

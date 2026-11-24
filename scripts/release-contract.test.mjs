@@ -259,6 +259,21 @@ This release adds a feature and fixes a bug.
     const emptyNotesPath = writeNotes('  \n');
     expect(() => verifyReleaseNotes(emptyNotesPath)).toThrow();
   });
+
+  it('rejects leftover template placeholders but allows comments and autolinks', () => {
+    const withPlaceholder = writeNotes(
+      minimalCategorizedNotes.replace('- 新增測試功能。', '- <新增的功能。>'),
+    );
+    expect(() => verifyReleaseNotes(withPlaceholder)).toThrow(/placeholder/);
+
+    const withCommentAndLink = writeNotes(
+      minimalCategorizedNotes.replace(
+        '- 新增測試功能。',
+        '<!-- <internal note> -->\n- 新增測試功能。<https://example.com>',
+      ),
+    );
+    expect(verifyReleaseNotes(withCommentAndLink)).toBe(withCommentAndLink);
+  });
 });
 
 describe('verifyArtifactContract', () => {

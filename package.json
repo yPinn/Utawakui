@@ -32,6 +32,8 @@
     "package:signing": "npm run build && electron-builder --win nsis --x64 --publish never --config.win.signExecutable=true",
     "release:verify-version": "node scripts/release-contract-cli.mjs version",
     "release:verify-artifacts": "node scripts/release-contract-cli.mjs artifacts",
+    "release:prepare": "node scripts/release-prepare.mjs",
+    "release:publish": "node scripts/release-publish.mjs",
     "release:verify-installed": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/windows-installed-acceptance.ps1",
     "clean": "node scripts/clean.mjs",
     "prepare": "husky",

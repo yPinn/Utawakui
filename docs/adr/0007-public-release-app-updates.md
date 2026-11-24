@@ -148,12 +148,12 @@ pinned to `electron-updater@6.8.11` to match electron-builder 26.
 ### Release workflow
 
 Normal `npm run package`, `npm run package:unpacked`, and release builds explicitly pass
-`--publish never`. Stable version tags run an unsigned review workflow that
-validates and packages the complete updater bundle as a private CI artifact.
-The protected release workflow remains manual-only and publishes only after
-review:
+`--publish never`. Pushing a stable version tag runs the release workflow, which
+stops at a public draft; a manual rerun of an existing tag uses the same path
+(amended 2026-11-25, replacing a separate private test build and a manual-only
+dispatch):
 
-1. Rebuild an existing stable `v<semver>` tag in the private source repository.
+1. Build the stable `v<semver>` tag in the private source repository.
 2. Verify the tag, `package.json`, lockfile root version, and versioned release
    notes are present and consistent.
 3. Run secret scan, dependency audit, license inventory, lint, format,
@@ -196,7 +196,8 @@ the reviewed draft remains a separate human action.
   cannot be treated as secrets.
 - **Publish from ordinary `main` pushes:** a passing CI build is not necessarily
   a release decision. Versioned tags, signing, artifact checks, and draft review
-  form the release boundary.
+  form the release boundary. A tag push only creates a draft; publishing stays a
+  human action.
 - **Download and restart silently:** Utawakui can be active during playback or
   OBS output; an unexpected restart is operationally unsafe.
 - **Require paid publisher signing for the current channel:** rejected for the

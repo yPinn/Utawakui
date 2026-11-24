@@ -1,4 +1,4 @@
-# ADR 0035: Product site on Cloudflare with a GitHub download entry
+# ADR 0035: Product site and download entry
 
 ## Status
 
