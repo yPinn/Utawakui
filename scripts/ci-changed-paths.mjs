@@ -126,12 +126,10 @@ export function createCiPlan({ eventName, isDraft = false, paths }) {
   }
 
   const pathPolicy = classifyChangedPaths(paths);
+  const quality = eventName === 'push' ? true : pathPolicy.quality;
 
-  return {
-    ...pathPolicy,
-    quality: eventName === 'push' ? true : pathPolicy.quality,
-    coverage: eventName === 'push',
-  };
+  // PRs measure coverage too, so floors fail before merge instead of on main.
+  return { ...pathPolicy, quality, coverage: quality };
 }
 
 export function formatGitHubOutputs(plan) {

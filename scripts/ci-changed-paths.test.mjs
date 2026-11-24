@@ -126,7 +126,7 @@ describe('CI changed-path policy', () => {
       expected: {
         dependencyAudit: false,
         quality: true,
-        coverage: false,
+        coverage: true,
         windowsPackage: false,
       },
     },
@@ -186,7 +186,7 @@ describe('CI changed-path policy', () => {
     ).toEqual({
       dependencyAudit: true,
       quality: true,
-      coverage: false,
+      coverage: true,
       windowsPackage: true,
     });
   });
