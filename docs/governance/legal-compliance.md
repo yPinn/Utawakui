@@ -589,11 +589,12 @@ OBS 畫面輸出：
 - [ ] 確認 packaging 與公開產品頁不暗示與 YouTube、Spotify、OBS、權利人或其他
       provider 有 affiliation，也不把 provider flow 表述為已授權曲庫服務。
 - [ ] 確認 app update 使用公開 release endpoint，client 不含 repository token；installer
-      與 executable 具有效簽章，update metadata/hash 與同次 build artifact 一致。
+      與 executable 維持未簽章並在發行說明揭露「未知的發行者」，update metadata/hash
+      與 `update-manifest.json` 簽章對應同次 build artifact。
 - [ ] 對自動更新檢查的必要 GitHub 網路連線做適當揭露，並確認不傳送曲庫、播放、歌詞、
       provider 或 OBS 狀態。
-- [ ] GitHub Pages 初期維持純靜態；加入 analytics、表單、嵌入服務或自訂網域前，另行
-      檢查 privacy、cookie、資料流與必要揭露。
+- [ ] 產品網站（[ADR 0035](../adr/0035-product-site-and-download-entry.md)）初期維持純靜態；
+      加入 analytics、表單或嵌入服務前，另行檢查 privacy、cookie、資料流與必要揭露。
 - [ ] 確認合規來源重新涵蓋台灣、日本、韓國、美國與中國大陸著作權/技術措施重點。
 - [ ] 接近 release date 時重新確認法律與平台條款。
 

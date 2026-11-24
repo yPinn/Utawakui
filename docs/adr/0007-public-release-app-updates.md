@@ -13,6 +13,10 @@ and proprietary product license are implemented. The current product decision
 accepts an unsigned automatic update channel instead of paying for a trusted
 publisher identity.
 
+Amended 2026-11-25: [ADR 0035](0035-product-site-and-download-entry.md) replaces
+the public product site boundary, and [ADR 0018](0018-signed-update-manifest.md)
+adds an independent signed update manifest on top of the integrity rules below.
+
 ## Context
 
 Utawakui's source repository is private. A packaged Windows app still needs a
@@ -68,31 +72,10 @@ verification as the accepted current product boundary.
 
 ### Public product site boundary
 
-The same public release repository may host a GitHub Pages product site during
-a later promotion phase. Pages and Releases have different responsibilities:
-
-- GitHub Releases remains the updater's machine-readable source and the
-  canonical binary download location. The Pages site must not mirror
-  `latest.yml`, installers, or blockmaps into a second update feed.
-- GitHub Pages is the human-facing entry point for product identity, curated
-  screenshots, concise feature/status summaries, system requirements, release
-  notes, legal/privacy links, and a stable download action that links directly
-  to the public GitHub Release asset.
-- Only curated public site source and assets live in the release repository.
-  Private application source, internal task notes, build logs, credentials,
-  unpublished provider details, and user media never enter the Pages artifact.
-- The initial site is static and has no account, comment, upload, form, or
-  third-party analytics surface. Analytics, embeds, custom domains, or other
-  promotion integrations require a later privacy/security review and necessary
-  disclosure.
-- Pages deploys through its own least-privilege GitHub Actions workflow and
-  protected `github-pages` environment. A site-content change does not publish
-  an app release, and an app release does not implicitly deploy arbitrary site
-  changes.
-- Product copy must keep the same rights-neutral boundary as the app: it must
-  not imply affiliation with OBS, YouTube, Spotify, music rightsholders, or any
-  provider, and it must not present provider-backed acquisition as a licensed
-  music service.
+Superseded by [ADR 0035](0035-product-site-and-download-entry.md): the product
+site is hosted on Cloudflare from private source, GitHub Releases stays the only
+download and update source, and the public release repository hosts no Pages
+site.
 
 ### Runtime update boundary
 
@@ -227,10 +210,8 @@ the reviewed draft remains a separate human action.
 ## Consequences
 
 The public release repository can expose binaries without exposing private
-source and can later provide a coherent public product/download page. The cost
-is an additional repository, separate Pages and release deployment boundaries,
-protected publishing credentials, and a real two-version installed update test
-for every release workflow change.
+source. The cost is an additional repository, protected publishing credentials,
+and a real two-version installed update test for every release workflow change.
 
 The first updater-enabled public version cannot be considered complete until
 both per-user and per-machine installs have been tested, including UAC,
@@ -257,4 +238,3 @@ data is added by this design.
 - [GitHub release model and source archives](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases)
 - [GitHub App authentication in Actions](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/making-authenticated-api-requests-with-a-github-app-in-a-github-actions-workflow)
 - [GitHub Actions secrets](https://docs.github.com/en/actions/concepts/security/secrets)
-- [GitHub Pages custom workflows](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)

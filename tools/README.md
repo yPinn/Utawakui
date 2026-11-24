@@ -12,7 +12,7 @@
 
 請在專案根目錄執行。簽署與驗證的完整參數見各檔案的 usage；兩者不帶參數執行時只顯示 usage 並失敗退出。金鑰產生器不帶參數就會嘗試建立金鑰，不適合作為入口探測命令。
 
-正式啟用、金鑰保管、輪替及發布操作只在[發行手冊](../docs/operations/release-runbook.md#signed-manifest-activation-and-rotation)維護；簽章格式與信任規則見 [ADR 0018](../docs/adr/0018-signed-update-manifest.md)。開發金鑰不能通過 production 驗證。功能是否啟用以 `shared/appUpdateValues.json` 為準，公鑰與狀態以 `shared/updateSigningKeys.json` 為準；保留工具不代表正式簽章已啟用。
+金鑰保管、輪替、復原及發布前驗證只在[發行手冊](../docs/operations/release-runbook.md#signed-manifest-rotation-and-recovery)維護；簽章格式與信任規則見 [ADR 0018](../docs/adr/0018-signed-update-manifest.md)。開發金鑰不能通過 production 驗證。是否啟用以 `shared/appUpdateValues.json` 為準，公鑰與狀態以 `shared/updateSigningKeys.json` 為準。
 
 ## 維護邊界與檢查
 

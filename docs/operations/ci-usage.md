@@ -58,6 +58,37 @@ When quality checks are selected, the Windows job runs the Windows-specific
 Vitest files and the Electron Settings layout probe after Ubuntu succeeds. The
 Windows package column governs the installer build and upgrade acceptance.
 
+## Windows Package And Installed Acceptance
+
+`windows-package` runs on a GitHub-hosted Windows runner only for manual
+diagnostics or changes that can affect the packaged app. It builds the full
+NSIS/update bundle with `npm run package`, then
+`scripts/verify-unsigned-windows-package.ps1` fails unless the installer and
+executable are both `NotSigned`, the packaged version matches, required notices
+are in ASAR, and the installer/blockmap/`latest.yml` contract is valid.
+
+`scripts/windows-installed-acceptance.ps1` then runs once per entry in
+`scripts/release-baselines.json`: it verifies the pinned public installer
+checksum, installs it into an isolated root, upgrades it to the candidate, checks
+version, registry, shortcut and data-retention evidence, traces cold and warm
+startup, and uninstalls. Entries not older than the candidate are skipped;
+`everyRun: false` entries run only on manual diagnostics. Add each newly
+published version to the baselines. The job has a 30-minute timeout, reads no
+secrets, publishes nothing and keeps only bounded JSON／startup evidence for
+7 days.
+
+The script mutates the machine only when `CI=true` and `GITHUB_ACTIONS=true`.
+Locally it needs `-AllowLocalMachineMutation` and still fails closed on any
+existing Utawakui process, uninstall entry, data or install directory, or
+shortcut; `-PlanOnly` shows the resolved plan without changes. A CI install
+proves installer parity and same-root data retention, not a production-feed
+update.
+
+`CI / build` is the stable ordinary check; `CI / windows-package` is conditional
+and must not be a required check. On the private GitHub Free repository these
+checks are signals, not enforced merge gates, and a failed executed check must
+not be merged.
+
 ## Cross-Platform Tests
 
 The product ships for Windows, but CI runs every Vitest file on Ubuntu. Only the

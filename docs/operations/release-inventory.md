@@ -249,58 +249,35 @@ The `electron.exe` filename is intentional. See
 
 ## Application Update Boundary
 
-ADR 0007 defines the app-update channel. It is separate from Settings
-updates for app-managed provider, FFmpeg, and model dependencies.
+[ADR 0007](../adr/0007-public-release-app-updates.md) owns the app-update channel
+and [ADR 0018](../adr/0018-signed-update-manifest.md) owns manifest signing. Both
+are separate from Settings updates for app-managed provider, FFmpeg and model
+dependencies. Release steps live in the [release runbook](release-runbook.md).
 
-- `package.json.version` is the release version source; packaged UI reads the
-  running version from main-process `app.getVersion()` over preload IPC.
-- Private source remains in `yPinn/Utawakui`; public downloads use the separate
-  `yPinn/Utawakui-Releases` repository.
-- Stable clients use only published `latest` releases. Draft/prerelease assets
-  are not update candidates.
-- Stable unsigned releases publish the installer, blockmap, `latest.yml`,
-  SHA-256 checksum, release notes, and minimal release-repository content from
-  one verified CI run. When the production manifest gate is enabled, the same
-  draft also includes `update-manifest.json`. No source repository or client
-  credential is copied into the app.
-- `electron-updater` is enabled only in packaged Windows builds. Renderer gets
-  bounded status plus fixed check/download/install intents only.
-- Update discovery may check automatically in packaged mode, but download and
-  restart remain explicit user actions. Development builds never contact the
-  release feed.
-- App-data, app-managed workflow dependencies, and the selected media library
-  remain outside the installer payload and survive updates.
-- Local `npm run package` and `npm run package:unpacked` never publish. The unsigned tag workflow
-  uploads a complete private review artifact. The manual release workflow keeps
-  package, `update-signing` and publish credentials in separate jobs, then creates
-  a public draft that still requires human publication.
+- Private source stays in `yPinn/Utawakui`; installers and the update feed are
+  published only as GitHub Release assets in `yPinn/Utawakui-Releases`. The
+  release workflow uploads assets; it does not push source or repository files.
+- No repository, signing or CI credential is packaged.
+- App data, app-managed dependencies and the selected media library stay outside
+  the installer payload and survive updates.
+- The product site does not mirror any asset below; its `/download` entry
+  redirects to the GitHub installer ([ADR 0035](../adr/0035-product-site-and-download-entry.md)).
 
-The public repository may later host a GitHub Pages product site. It is a
-curated human-facing surface, not an update server: downloads link to the
-stable GitHub Release asset, while `latest.yml`, installer, and blockmap remain
-canonical Release assets. Use a separate least-privilege Pages workflow and
-`github-pages` environment so site deployment cannot publish or mutate an app
-release. Initial Pages scope is static product identity, screenshots, system
-requirements, release/legal/privacy links, and download navigation; accounts,
-forms, user uploads, third-party embeds, and analytics remain out of scope until
-separately reviewed.
+Stable release assets:
 
-Planned stable release assets:
+| Artifact                                | Purpose                                                                |
+| --------------------------------------- | ---------------------------------------------------------------------- |
+| `Utawakui-Setup-<version>.exe`          | Unsigned assisted NSIS installer/update payload.                       |
+| `Utawakui-Setup-<version>.exe.blockmap` | Differential-download map; full installer is the fallback.             |
+| `latest.yml`                            | Stable update version, URL, size, and SHA-512 metadata.                |
+| `SHA256SUMS.txt`                        | Installer checksum for manual verification.                            |
+| `update-manifest.json`                  | Ed25519-signed binding of installer name, size and SHA-512 (ADR 0018). |
+| GitHub Release notes                    | Human-reviewed release summary; remote HTML is not rendered in app.    |
 
-| Artifact                                | Purpose                                                                     |
-| --------------------------------------- | --------------------------------------------------------------------------- |
-| `Utawakui-Setup-<version>.exe`          | Unsigned assisted NSIS installer/update payload.                            |
-| `Utawakui-Setup-<version>.exe.blockmap` | Differential-download map; full installer is the fallback.                  |
-| `latest.yml`                            | Stable update version, URL, size, and SHA-512 metadata.                     |
-| `update-manifest.json`                  | Conditional Ed25519 multi-signature binding after production activation.    |
-| GitHub Release notes                    | Human-reviewed release summary; remote HTML is not rendered in app.         |
-| GitHub Pages artifact (future)          | Curated static product site; contains no updater payload or private source. |
-
-The current channel deliberately sets `win.verifyUpdateCodeSignature: false`.
-`latest.yml` SHA-512 verification detects mismatched/corrupt payloads but does
-not authenticate the publisher if release access is compromised. Do not claim
-publisher verification; preserve the fixed feed, stable-only policy, protected
-draft workflow, and explicit download/restart actions.
+The channel keeps `win.verifyUpdateCodeSignature: false`, so Windows publisher
+identity is never verified or claimed. Builds that contain the manifest verifier
+refuse updates whose signed manifest does not match the selected installer;
+older builds rely on `latest.yml` SHA-512 only.
 
 ## Installer Profile Boundary
 

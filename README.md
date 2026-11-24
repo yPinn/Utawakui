@@ -2,33 +2,12 @@
 
 > 為 OBS 歌回與翻唱流程設計的 local-first Windows 桌面控制台。
 
-Utawakui 以本機曲庫與播放器為核心，將歌單、排練、演出安排、歌詞與 OBS Browser Source
-輸出集中在同一個操作介面。預設工作流使用使用者自備的本機媒體；外部來源、
-歌詞服務、音訊處理與公開輸出均是可獨立啟用的進階流程。
+本 repo 是 Utawakui 的私有開發來源，讀者是開發與維護人員。使用者向的產品介紹、
+下載與版本資訊在公開的 [Utawakui-Releases](https://github.com/yPinn/Utawakui-Releases)
+與產品網站（[ADR 0035](docs/adr/0035-product-site-and-download-entry.md)），原稿位於
+`docs/releases/`。
 
-目前專案處於 **Windows x64 公開測試階段**。它不是曲庫、授權服務或串流平台的
-替代品，也不會替使用者判斷第三方素材的使用權利。
-
-## 這是什麼
-
-用 Utawakui 管理**你自己的歌曲**，播放時**同步顯示歌詞**，並把「現在播放」「歌詞」「歌單」做成可直接放進 **OBS** 的畫面。
-安裝後即可匯入本機音樂、建立歌單並播放；歌詞查詢、伴奏分離與 OBS 輸出等**進階功能**，需要時再到設定頁開啟。
-
-## 已有能力
-
-| 範圍            | 現況                                                                                                                                                                                                                                                  |
-| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 本機曲庫與播放  | MP3、FLAC、WAV、AAC／M4A、Ogg／Opus／WebM 等已驗證格式可直接匯入；WMA、AIFF、ALAC、APE、WavPack、CAF 可在明示確認後轉成 FLAC 副本，原檔不變。歌單、待播佇列、播放控制與 Windows shell integration **已可用**，按 X 可選背景執行或完整退出並記住選擇。 |
-| 練習與音訊      | Pitch/tempo 即時預覽、可發聲節拍器、`quick`／`general` 分離與 guide vocal **已可用**；pre-render 與 Refined recipe **尚未成為產品能力**。                                                                                                             |
-| 演出安排與 BGM  | 待唱、演出紀錄、封存／恢復與場間 BGM 交接**已具備本地流程**；實際擷取與演出聽感仍需驗收。                                                                                                                                                             |
-| 歌詞            | 本機匯入、provider lookup、時間軸／讀音、桌面提詞器與 Lyrics Overlay 主路徑**已建立**，仍持續做視覺驗收與操作整理。                                                                                                                                   |
-| 輸出與 OBS 連線 | 三類 Browser Source、Gallery、Workbench 與 URL 複製**已完成 MVP**；另可選擇唯讀連線 OBS，記錄場次時間標記並輸出為 YouTube 章節文字。                                                                                                                  |
-| 進階來源        | 經 `provider-flow` 啟用後，可準備 app-managed `yt-dlp` runtime，進行候選搜尋、匯入與 metadata backfill。                                                                                                                                              |
-| 發布與維護      | NSIS installer、啟動量測、local diagnostics 與 updater runtime **已建立**；公開測試版**採未簽章發行**。                                                                                                                                               |
-
-完整的已實作／部分完成／規劃中對照，以
-[產品規格](docs/spec.md) 為準；技術邊界請見
-[架構圖](docs/architecture.md)。
+目前範圍與完成度以[產品規格](docs/spec.md)為準，技術邊界見[架構圖](docs/architecture.md)。
 
 ## 開發
 

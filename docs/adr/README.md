@@ -12,7 +12,7 @@
 | [0004](0004-korean-romanization-package.md)                        | 韓文羅馬字套件                        | Accepted                          |
 | [0005](0005-python-ytdlp-provider-engine.md)                       | Python yt-dlp Provider                | Accepted                          |
 | [0006](0006-loopback-output-websocket-runtime.md)                  | Loopback Output transport             | Accepted                          |
-| [0007](0007-public-release-app-updates.md)                         | 公開發行與更新                        | Accepted                          |
+| [0007](0007-public-release-app-updates.md)                         | 公開發行與更新                        | Accepted；網站一節由0035取代      |
 | [0008](0008-local-diagnostics-and-error-handling.md)               | 本機diagnostics與錯誤                 | Accepted                          |
 | [0009](0009-tiered-audio-processing-runtime.md)                    | 分級音訊環境                          | Accepted for implementation       |
 | [0010](0010-lyrics-timing-granularity-and-output-content-split.md) | 歌詞T0／T1／T2與投影                  | Accepted                          |
@@ -40,3 +40,4 @@
 | [0032](0032-ui-and-output-languages.md)                            | 介面語言與 Output 語言                | Accepted                          |
 | [0033](0033-mobile-companion-local-network.md)                     | 手機遙控與提詞的區網通道              | Accepted                          |
 | [0034](0034-output-motion-rendering-and-animation-handoff.md)      | Output 動態渲染分工與動畫交付         | Accepted                          |
+| [0035](0035-product-site-and-download-entry.md)                    | 產品網站與下載入口                    | Accepted                          |
