@@ -36,9 +36,14 @@
     "ribbon-setlist": "setlist",
     "fisheye-lens": "lyrics",
     "phantom-thieves": "lyrics",
-    "textured-credits": "lyrics"
+    "textured-credits": "lyrics",
+    "cinema-frame": "lyrics"
   },
-  "developmentTemplateIds": [],
+  "developmentTemplateIds": ["cinema-frame"],
+  "templateAliases": {
+    "framed-vertical": "cinema-frame",
+    "cinema-letterbox": "cinema-frame"
+  },
   "templateCaptureSizes": {
     "receipt-setlist": {
       "default": "large",
@@ -97,6 +102,10 @@
       "supported": ["full"]
     },
     "textured-credits": {
+      "default": "full",
+      "supported": ["full"]
+    },
+    "cinema-frame": {
       "default": "full",
       "supported": ["full"]
     },

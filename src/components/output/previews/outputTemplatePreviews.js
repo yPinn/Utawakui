@@ -12,6 +12,7 @@ const TEMPLATE_PREVIEWS = Object.freeze({
   'fisheye-lens': () => import('./FisheyeLensPreview.vue'),
   'phantom-thieves': () => import('./PhantomThievesPreview.vue'),
   'textured-credits': () => import('./TexturedCreditsPreview.vue'),
+  'cinema-frame': () => import('./ScreenMaskPreview.vue'),
   'manga-frame': () => import('./MangaFramePreview.vue'),
   'live-stage': () => import('./LiveStagePreview.vue'),
   'art-card': () => import('./ArtCardPreview.vue'),

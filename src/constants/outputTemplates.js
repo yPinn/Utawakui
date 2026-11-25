@@ -218,6 +218,17 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     ]),
   },
   {
+    id: 'cinema-frame',
+    kind: 'lyrics',
+    recommendedLanguages: ['any'],
+    order: 80,
+    name: t('outputPanel.templates.cinemaFrame.name'),
+    facts: lyricsTemplateFacts([
+      ['direction', t('outputPanel.templates.cinemaFrame.facts.direction')],
+      ['language', t('outputPanel.templates.cinemaFrame.facts.language')],
+    ]),
+  },
+  {
     id: 'art-card',
     kind: 'now-playing',
     order: 10,

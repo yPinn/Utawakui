@@ -2684,6 +2684,34 @@ export function selectLyricsOverlayFrame(snapshot, options = {}) {
     ? snapshot.lyrics.lines
     : [];
   const nowMs = options.nowMs ?? Date.now();
+  const repeatCueStartMs = lines[frame.lineIndex]?.repeatCueStartMs;
+  if (templateId === 'cinema-frame') {
+    const visible = Boolean(
+      snapshot?.playback?.track?.id &&
+      ['playing', 'paused', 'seeking'].includes(snapshot.playback.status),
+    );
+    const synced = snapshot?.lyrics?.synced === true;
+    const screenMask = { visible };
+    if (!visible || !synced)
+      return { ...hiddenLyricsFrame(snapshot), screenMask };
+
+    const startMs = lines[frame.lineIndex]?.startMs;
+    const endMs = effectiveLineEnd(snapshot, lines, frame.lineIndex);
+    if (Number.isFinite(startMs) && endMs > startMs) {
+      Object.assign(screenMask, {
+        elapsedMs: Math.max(0, lyricsPositionMs(snapshot, nowMs) - startMs),
+        durationMs: endMs - startMs,
+        endMs,
+        playing: snapshot.playback.status === 'playing',
+        rate: playbackRate(snapshot),
+      });
+    }
+    return {
+      ...frame,
+      screenMask,
+      ...(Number.isFinite(repeatCueStartMs) && { repeatCueStartMs }),
+    };
+  }
   const lyricsPresentationPolicyId =
     templateId === 'live-stage'
       ? normalizeLyricsPresentationPolicyId(
@@ -2826,9 +2854,7 @@ export function selectLyricsOverlayFrame(snapshot, options = {}) {
     ...frame,
     ...(templateId === 'phantom-thieves' &&
       frame.nextText === frame.currentText && { nextText: '' }),
-    ...(Number.isFinite(lines[frame.lineIndex]?.repeatCueStartMs) && {
-      repeatCueStartMs: lines[frame.lineIndex].repeatCueStartMs,
-    }),
+    ...(Number.isFinite(repeatCueStartMs) && { repeatCueStartMs }),
     ...(texturedCreditsTiming ? { texturedCreditsTiming } : {}),
     ...(templateId === 'phantom-thieves' && frame.currentText
       ? {

@@ -1,5 +1,8 @@
 import { onMounted, shallowRef } from 'vue';
-import { templateKinds } from '../../../shared/outputTemplateValues.json';
+import {
+  templateAliases,
+  templateKinds,
+} from '../../../shared/outputTemplateValues.json';
 
 const STORAGE_KEY = 'utawakui.output.template-favorites';
 
@@ -16,7 +19,15 @@ export function useOutputTemplateFavorites() {
         globalThis.localStorage?.getItem(STORAGE_KEY) ?? 'null',
       );
       if (Array.isArray(ids))
-        favorites.value = new Set(ids.filter(isTemplateId));
+        favorites.value = new Set(
+          ids
+            .map((id) =>
+              typeof id === 'string' && Object.hasOwn(templateAliases, id)
+                ? templateAliases[id]
+                : id,
+            )
+            .filter(isTemplateId),
+        );
     } catch {
       // Storage is optional for a local browsing preference.
     }

@@ -8,6 +8,15 @@
     "requiredReview": "Inspect content, rights, crop, dimensions and runtime match before a separately authorized replacement"
   },
   "templates": {
+    "cinema-frame": {
+      "file": "cinema-frame.jpg",
+      "sha256": "c2257d7c7cdbc2ae7e03d95fe4c2999e1bc40b084a0f09986c164b9744389c02",
+      "content": "synthetic-template-preview",
+      "rights": "project-owned-synthetic-artwork",
+      "delivery": "development-only",
+      "humanReview": "not-tested",
+      "origin": "Programmatic 1280 × 720 illustration of the default Rounded Window frame, using the template's window path, built-in Klee One, and original sample lyrics."
+    },
     "fisheye-lens": {
       "file": "fisheye-lens.jpg",
       "sha256": "2c616635bb8ec8a64aaef8c1d76c6ea9ddd6b2a8a4833f92d68fe5f0988980da",

@@ -555,6 +555,8 @@ describe('packaged dependency boundary', () => {
       ['overlay/lyrics/lyricsFine.mjs', true],
       ['overlay/lyrics/lyricsFit.mjs', true],
       ['overlay/lyrics/chalkboardVertical.mjs', true],
+      ['overlay/lyrics/screenMask.css', true],
+      ['overlay/lyrics/screenMask.mjs', true],
       ['overlay/lyrics/fisheyeLens.mjs', true],
       ['overlay/lyrics/kineticPop.css', true],
       ['shared/browser/kineticPop.mjs', true],

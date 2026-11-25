@@ -56,6 +56,13 @@
         "language": "Chinese, Japanese"
       }
     },
+    "cinemaFrame": {
+      "name": "Cinema Frame",
+      "facts": {
+        "direction": "Rounded Window vertical / Letterbox captions",
+        "language": "Any language"
+      }
+    },
     "texturedCredits": {
       "name": "Textured Credits",
       "facts": {
@@ -702,6 +709,13 @@
           "candyRim": "Style 2 | Gradient with white outline",
           "chromaticDepth": "Style 3 | Offset lower right",
           "cycle": "Rotate the three by line"
+        }
+      },
+      "screenMaskLayout": {
+        "label": "Frame style",
+        "options": {
+          "framedVertical": "Rounded Window",
+          "cinemaLetterbox": "Letterbox"
         }
       },
       "phantomMode": {

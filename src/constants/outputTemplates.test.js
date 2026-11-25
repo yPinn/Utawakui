@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { outputAppearanceFieldKeysForTemplate } from '../../shared/outputAppearance.mjs';
 import { lyricsTemplateCapabilities } from '../../shared/presentation/lyricsTemplateCapabilities.mjs';
 import {
@@ -10,6 +10,7 @@ import {
 } from './outputTemplates.js';
 import OUTPUT_TEMPLATE_VALUES from '../../shared/outputTemplateValues.json';
 import { createOutputPreviewScene } from '../../shared/presentation/outputPreviewScene.mjs';
+import { filterOutputTemplates } from '../utils/outputTemplateSearch.js';
 
 const EXPECTED_TEMPLATE_DISPLAY_NAMES = Object.freeze({
   'phantom-thieves': '幻影怪盜',
@@ -43,6 +44,47 @@ it('ships Textured Credits as a selectable Lyrics template', () => {
       expect.objectContaining({ key: 'translation', value: '獨立字幕' }),
     ]),
   });
+});
+
+it('lists one Cinema Frame entry with both layouts only in the development Gallery', async () => {
+  const ids = ['cinema-frame', 'framed-vertical', 'cinema-letterbox'];
+  const regularIds = getOutputWorkbenchData().templates.map(({ id }) => id);
+  for (const id of ids) expect(regularIds).not.toContain(id);
+  vi.stubEnv('MODE', 'development');
+  vi.resetModules();
+  try {
+    const { getOutputWorkbenchData: devWorkbench } =
+      await import('./outputTemplates.js');
+    const developmentTemplates = devWorkbench().templates.filter(({ id }) =>
+      ids.includes(id),
+    );
+    expect(developmentTemplates).toHaveLength(1);
+    const [template] = developmentTemplates;
+    expect(template).toMatchObject({
+      id: 'cinema-frame',
+      kind: 'lyrics',
+      name: '電影畫幅',
+      availability: { available: true },
+    });
+    expect(
+      template.appearanceFields.find(({ key }) => key === 'screenMaskLayout'),
+    ).toMatchObject({
+      group: 'layout',
+      defaultValue: 'framed-vertical',
+      options: [
+        { id: 'framed-vertical', label: '圓角視窗' },
+        { id: 'cinema-letterbox', label: '寬銀幕' },
+      ],
+    });
+    for (const query of ['圓角視窗直書', '寬銀幕字幕']) {
+      expect(filterOutputTemplates(developmentTemplates, query)).toEqual([
+        template,
+      ]);
+    }
+  } finally {
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  }
 });
 
 const EXPECTED_TEMPLATE_APPEARANCE_KEYS = Object.freeze({

@@ -1,4 +1,8 @@
 import { overlayText } from '../shared/messages.mjs';
+import {
+  outputScreenMaskFontFamilyCss,
+  outputScreenMaskLayout,
+} from '../../shared/outputAppearance.mjs';
 import { playbackPositionMs } from '../../shared/presentation/state.mjs';
 import {
   adaptLiveStageLyricsPresentation,
@@ -66,6 +70,10 @@ function createMeasurement(
 ) {
   const chalkboard = templateId === 'chalkboard-vertical';
   const centered = templateId === 'centered-vertical';
+  const framed =
+    templateId === 'cinema-frame' &&
+    elements.root.dataset.screenMask === 'framed-vertical';
+  const cinema = templateId === 'cinema-frame' && !framed;
   const ornate = templateId === 'ornate-vertical';
   const mixedSizes =
     ornate &&
@@ -76,6 +84,7 @@ function createMeasurement(
   const vertical =
     centered ||
     chalkboard ||
+    framed ||
     ['manga-frame', 'ornate-vertical'].includes(templateId);
   const target =
     templateId === 'manga-frame'
@@ -100,7 +109,9 @@ function createMeasurement(
     (rootRect.width <= 0 || rootRect.height <= 0) &&
     templateId !== 'karaoke-stack' &&
     !chalkboard &&
-    !centered
+    !centered &&
+    !framed &&
+    !cinema
   )
     return null;
   const targetRect = target.getBoundingClientRect();
@@ -120,7 +131,7 @@ function createMeasurement(
   // lowered column and its ink while preserving longer authored phrases.
   const heightFraction = ornate
     ? 0.74
-    : centered
+    : centered || framed
       ? 0.68
       : chalkboard
         ? 0.44
@@ -140,15 +151,16 @@ function createMeasurement(
   }
   // Readability is a separate ceiling from physical canvas capacity. A wide
   // 1080p source must not pack every CJK clause onto one nearly screen-wide row.
-  if (!vertical) width = Math.min(width, size * 18);
+  if (cinema) width = window.innerWidth * 0.88 - padding * 2;
+  else if (!vertical) width = Math.min(width, size * 18);
   // Every physical row/vertical column is an active sequential batch. Other
   // template lanes remain previews rather than extra simultaneous current rows.
-  const rows = chalkboard ? 3 : 1;
+  const rows = chalkboard ? 3 : framed || cinema ? 2 : 1;
   if (width <= 0 || height <= 0) return null;
   const probe = document.createElement('span');
   probe.setAttribute('aria-hidden', 'true');
   if (slideWords) probe.dataset.ornateEntrance = 'random-slide';
-  if (centered) probe.lang = elements.root.lang;
+  if (centered || framed || cinema) probe.lang = elements.root.lang;
   Object.assign(probe.style, {
     position: 'fixed',
     left: '-10000px',
@@ -198,7 +210,8 @@ function createMeasurement(
   const fitsLine = (text, units) => {
     const rect = measureLine(text, units);
     return (
-      rect.width <= (chalkboard || centered ? lineHeight * 1.2 : width) &&
+      rect.width <=
+        (chalkboard || centered || framed ? lineHeight * 1.2 : width) &&
       rect.height <= (vertical ? height : lineHeight * 1.2)
     );
   };
@@ -244,9 +257,9 @@ function createMeasurement(
         text,
         splitLyricsDisplayRows(text, (rowText) => fitsLine(rowText), rows, {
           literalPrefixes,
-          authoredLineBreaks: chalkboard,
-          authoredPhraseSpaces: chalkboard,
-          keepLatinRuns: chalkboard,
+          authoredLineBreaks: chalkboard || framed || cinema,
+          authoredPhraseSpaces: chalkboard || framed,
+          keepLatinRuns: chalkboard || framed || cinema,
           keepJapaneseContractions: chalkboard,
         }),
       );
@@ -270,7 +283,7 @@ function createMeasurement(
           (vertical ? height : width) * rows * 1.25
       )
         return false;
-      if (chalkboard) {
+      if (chalkboard || framed) {
         const columns = layout(text);
         return columns !== null && columns.length <= rows;
       }
@@ -512,6 +525,22 @@ export function createLyricsFitController(options = {}) {
     }
     const base =
       settings.templateId === 'karaoke-stack' ? (frame.ktv ?? frame) : frame;
+    const screenMask = settings.templateId === 'cinema-frame';
+    const maskAppearance = screenMask
+      ? (options.screenMaskAppearance?.() ?? settings)
+      : null;
+    const maskLayout = maskAppearance
+      ? outputScreenMaskLayout(maskAppearance.screenMaskLayout)
+      : null;
+    if (screenMask && elements) {
+      elements.root.dataset.screenMask = maskLayout;
+      elements.root.lang = base.language || 'und';
+      const font = outputScreenMaskFontFamilyCss(
+        maskAppearance,
+        base.language ?? '',
+      );
+      elements.root.style.setProperty('--screen-mask-font', font);
+    }
     const canonical = snapshot?.lyrics?.lines?.[base.lineIndex];
     if (!canonical) return { frame, delayMs: null };
     const continuation =
@@ -529,6 +558,7 @@ export function createLyricsFitController(options = {}) {
     const line = {
       ...canonical,
       endMs:
+        (screenMask ? frame.screenMask?.endMs : undefined) ??
         canonical.endMs ??
         snapshot.lyrics.lines[base.lineIndex + 1]?.startMs ??
         (Number.isFinite(snapshot.playback?.durationMs)
@@ -584,6 +614,7 @@ export function createLyricsFitController(options = {}) {
     const key = JSON.stringify([
       snapshot.lyrics.trackId,
       settings.templateId,
+      maskLayout,
       settings.templateId === 'ornate-vertical'
         ? document?.documentElement?.dataset.ovlOrnateArrangement
         : null,
@@ -593,7 +624,9 @@ export function createLyricsFitController(options = {}) {
       canonical.estimatedFineTiming,
       rate,
       base.currentReading,
-      settings.templateId === 'centered-vertical' ? base.language : null,
+      settings.templateId === 'centered-vertical' || screenMask
+        ? base.language
+        : null,
       settings.templateId === 'karaoke-stack' ? base.nextText : null,
     ]);
     let entry = cache.get(key);
@@ -656,13 +689,15 @@ export function createLyricsFitController(options = {}) {
         const layoutOptions = {
           fits: measurement.fits,
           rate,
-          sequentialRows: !chalkboard && !ornate,
-          phraseRows: !chalkboard && !ornate,
+          sequentialRows: !chalkboard && !ornate && !screenMask,
+          phraseRows: !chalkboard && !ornate && !screenMask,
           keepLatinRuns: ornate || !chalkboard,
-          preserveSourceStarts: centered,
+          preserveSourceStarts: centered || screenMask,
           keepJapaneseContractions: chalkboard,
           language: base.language,
-          ...(chalkboard || centered ? { minimumDwellMs: 800 } : {}),
+          ...(chalkboard || centered || screenMask
+            ? { minimumDwellMs: 800 }
+            : {}),
         };
         const combined =
           continuation &&
@@ -683,7 +718,10 @@ export function createLyricsFitController(options = {}) {
             ? { ...layoutOptions, fits: (text) => text === continuation.text }
             : layoutOptions,
         );
-        if ((chalkboard || centered) && plan.reason === 'duration-capacity') {
+        if (
+          (chalkboard || centered || screenMask) &&
+          plan.reason === 'duration-capacity'
+        ) {
           // Preserve the entire source line when its cue is too short for the
           // preferred dwell. The renderer cuts the reveal for very short pages.
           plan = planLyricsDisplay(line, {
@@ -746,6 +784,7 @@ export function createLyricsFitController(options = {}) {
     }
     const rows = entry.rows[selected.index];
     const active =
+      screenMask ||
       entry.plan.pages.length > 1 ||
       entry.multiline[selected.index] === true ||
       [
@@ -790,6 +829,20 @@ export function createLyricsFitController(options = {}) {
       data.fitActive = String(active);
     }
     const { startMs, endMs } = selected.page ?? {};
+    if (screenMask && frame.screenMask && selected.page) {
+      projected.screenMask = {
+        ...frame.screenMask,
+        rows: (rows ?? [{ text: projected.currentText }]).map(
+          ({ text }) => text,
+        ),
+        ...(entry.plan.status === 'ready' &&
+          Number.isFinite(startMs) &&
+          endMs > startMs && {
+            elapsedMs: Math.max(0, at - startMs),
+            durationMs: endMs - startMs,
+          }),
+      };
+    }
     if (settings.templateId === 'ornate-vertical') {
       const playing = snapshot.playback?.status === 'playing';
       projected.ornateRevealPlaying = playing;

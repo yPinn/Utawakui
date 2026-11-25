@@ -24,7 +24,8 @@ const {
 } = require('../../shared/outputRuntimeValues.json');
 const {
   slots: OUTPUT_SLOT_DEFINITIONS,
-  developmentTemplateIds: DEVELOPMENT_TEMPLATE_IDS,
+  developmentTemplateIds,
+  templateAliases: TEMPLATE_ALIASES,
 } = require('../../shared/outputTemplateValues.json');
 
 const OUTPUT_PATH_BY_KIND = new Map(
@@ -48,8 +49,6 @@ function registerOutputHandlers({
   ipcMain,
   server,
   isDev = false,
-  // Injectable so the dev-only gate stays tested while no template uses it.
-  developmentTemplateIds = DEVELOPMENT_TEMPLATE_IDS,
   requireFeatureGate,
   featureIds,
   getConfig,
@@ -196,11 +195,12 @@ function registerOutputHandlers({
   });
 
   ipcMain.handle('output-slots:upsert', async (event, kind, slot) => {
-    if (
-      !isDev &&
-      typeof slot?.templateId === 'string' &&
-      developmentTemplateIds.includes(slot.templateId.trim())
-    ) {
+    const requestedId =
+      typeof slot?.templateId === 'string' ? slot.templateId.trim() : '';
+    const templateId = Object.hasOwn(TEMPLATE_ALIASES, requestedId)
+      ? TEMPLATE_ALIASES[requestedId]
+      : requestedId;
+    if (!isDev && developmentTemplateIds.includes(templateId)) {
       throw new TypeError('Invalid output slot');
     }
     return syncOutputSlots(upsertOutputSlot(outputDir(), kind, slot));

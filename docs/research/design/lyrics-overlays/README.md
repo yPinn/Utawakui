@@ -34,6 +34,8 @@
 
 2026-11-22 收錄[和風直書改版提案](ornate-vertical.md)。沿用 `ornate-vertical`，先以〈晩餐歌〉比較大小字與焦點字拉長，再以〈スピカ〉比較逐字與留欄。
 
+2026-11-25 收錄[圓角視窗直書](framed-vertical.md)並更新[寬銀幕字幕](cinema-letterbox.md)，附兩支片頭的關鍵影格觀察、遮罩幾何與 GSAP 編排建議。
+
 ## 共用格式
 
 五款正式字幕的現況回填、左中右人物佔位與位置調整候選另見[VTuber 佔位回看](production-vtuber-placement-review.md)。

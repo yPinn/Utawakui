@@ -18,9 +18,17 @@ function freezeCapabilities(capabilities) {
   });
 }
 
+const SCREEN_MASK_CAPABILITIES = freezeCapabilities({
+  ...UNKNOWN_LYRICS_TEMPLATE_CAPABILITIES,
+  t1Progress: 'weighted-pages',
+  t2Progress: 'source-mapped-pages',
+  usesSourceMappedTiming: true,
+});
+
 export const LYRICS_TEMPLATE_CAPABILITIES = Object.freeze({
   'phantom-thieves': UNKNOWN_LYRICS_TEMPLATE_CAPABILITIES,
   'textured-credits': UNKNOWN_LYRICS_TEMPLATE_CAPABILITIES,
+  'cinema-frame': SCREEN_MASK_CAPABILITIES,
   'fisheye-lens': freezeCapabilities({
     ...UNKNOWN_LYRICS_TEMPLATE_CAPABILITIES,
     t2Progress: 'source-mapped-phrases-and-segments',

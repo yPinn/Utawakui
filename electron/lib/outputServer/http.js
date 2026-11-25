@@ -55,6 +55,8 @@ const OVERLAY_STATIC_ROUTES = Object.freeze({
   '/overlay/lyrics/lyrics.css': ['lyrics', 'lyrics.css'],
   '/overlay/lyrics/lyrics.mjs': ['lyrics', 'lyrics.mjs'],
   '/overlay/lyrics/templateModules.mjs': ['lyrics', 'templateModules.mjs'],
+  '/overlay/lyrics/screenMask.css': ['lyrics', 'screenMask.css'],
+  '/overlay/lyrics/screenMask.mjs': ['lyrics', 'screenMask.mjs'],
   '/overlay/lyrics/phantomThieves.css': ['lyrics', 'phantomThieves.css'],
   '/overlay/lyrics/phantomThieves.mjs': ['lyrics', 'phantomThieves.mjs'],
   '/overlay/lyrics/texturedCredits.css': ['lyrics', 'texturedCredits.css'],

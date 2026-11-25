@@ -189,6 +189,34 @@ describe('lyric fit controller lifecycle', () => {
     ]);
   });
 
+  it.each(['framed-vertical', 'cinema-letterbox'])(
+    'fits %s into two display rows without altering source cue timing',
+    (screenMaskLayout) => {
+      const templateId = 'cinema-frame';
+      const { controller, snapshot } = surface(templateId);
+      const text = '夜の窓に灯る\n風が止むまで';
+      snapshot.lyrics.lines = [{ text, startMs: 1000, endMs: 5000 }];
+      snapshot.playback.positionMs = 1500;
+      const { frame } = controller.prepare(
+        snapshot,
+        {
+          visible: true,
+          lineIndex: 0,
+          currentText: text,
+          language: 'ja',
+          screenMask: { visible: true, endMs: 5000 },
+        },
+        { templateId, screenMaskLayout },
+      );
+      expect(frame.screenMask).toMatchObject({
+        rows: ['夜の窓に灯る\n', '風が止むまで'],
+        elapsedMs: 500,
+        durationMs: 4000,
+      });
+      expect(frame.currentText).toBe(text);
+    },
+  );
+
   it('leads later Chalkboard columns from their source starts at the current playback rate', () => {
     const templateId = 'chalkboard-vertical';
     const { controller, snapshot } = surface(templateId);
@@ -361,6 +389,7 @@ describe('lyric fit controller lifecycle', () => {
     const elements = {
       root: {
         dataset: {},
+        style: { setProperty() {} },
         getBoundingClientRect: () => ({ width: 900, height: 200 }),
       },
       current: { ...target, querySelector: () => null },

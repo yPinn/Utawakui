@@ -1625,6 +1625,10 @@ function clearLazyTemplates(elements, activeTemplateId = null) {
     lyricsTemplateModule('textured-credits')?.releaseTexturedCredits(
       elements.texturedCredits,
     );
+  if (activeTemplateId !== 'cinema-frame') {
+    lyricsTemplateModule('cinema-frame')?.clearScreenMaskFrame(elements);
+    delete elements.root.dataset.screenMask;
+  }
 }
 
 let performanceRenderId = 0;
@@ -1765,6 +1769,7 @@ function renderLyricsFrameInternal(elements, sourceFrame, options = {}) {
   const isFisheye = templateId === 'fisheye-lens';
   const isPhantom = templateId === 'phantom-thieves';
   const isTexturedCredits = templateId === 'textured-credits';
+  const isScreenMask = templateId === 'cinema-frame';
   clearLazyTemplates(elements, templateId);
   if (!isChalkboard) clearChalkboardVertical(elements);
   if (
@@ -1775,7 +1780,8 @@ function renderLyricsFrameInternal(elements, sourceFrame, options = {}) {
     isCenteredVertical ||
     isFisheye ||
     isPhantom ||
-    isTexturedCredits
+    isTexturedCredits ||
+    isScreenMask
   ) {
     entranceAnimations.get(elements.current)?.cancel?.();
     entranceAnimations.delete(elements.current);
@@ -1796,6 +1802,23 @@ function renderLyricsFrameInternal(elements, sourceFrame, options = {}) {
 
   if (elements.root.dataset.liveStage === 'true') {
     clearLiveStagePresentation(elements, renderOptions);
+  }
+  if (isScreenMask) {
+    clearOrnateVerticalPresentation(elements, renderOptions);
+    stopMangaAnimations(elements, renderOptions, true);
+    clearMangaLyrics(elements);
+    clearLyricsRenderState(elements.current, renderOptions);
+    clearLyricsRenderState(elements.next, renderOptions);
+    const module = lyricsTemplateModule(templateId);
+    if (module) {
+      module.renderScreenMaskFrame(elements, frame, {
+        screenMaskLayout: renderOptions.screenMaskLayout,
+        gsap: resolveGsap(renderOptions),
+        reducedMotion: renderOptions.reducedMotion,
+      });
+    } else elements.root.hidden = true;
+    elements.root.dataset.revision = String(frame.revision);
+    return;
   }
   if (isKineticPop) {
     clearOrnateVerticalPresentation(elements, renderOptions);
@@ -2485,6 +2508,7 @@ function boot() {
     fisheye: document.querySelector('#lyrics-fisheye'),
     phantomThieves: document.querySelector('#lyrics-phantom-thieves'),
     texturedCredits: document.querySelector('#lyrics-textured-credits'),
+    screenMask: document.querySelector('#lyrics-screen-mask'),
     liveStageCard: document.querySelector('#lyrics-live-stage-card'),
     liveStageChrome: document.querySelector('#lyrics-live-stage-chrome'),
     liveStageTitle: document.querySelector('#lyrics-live-stage-title'),
@@ -2532,6 +2556,7 @@ function boot() {
     elements,
     document,
     window,
+    screenMaskAppearance: () => slotAppearance,
     refresh: () => frameScheduler?.refresh(),
     renderForMeasurement: (frame, settings) =>
       renderLyricsFrameSafely(elements, frame, {
@@ -2612,6 +2637,9 @@ function boot() {
         templateId: slot?.templateId,
       });
       slotAppearance = appearance;
+      if (slot?.templateId === 'cinema-frame')
+        elements.root.dataset.screenMask = appearance.screenMaskLayout;
+      else delete elements.root.dataset.screenMask;
       updateMangaGeometry();
       prepareFocusStyles();
       return {
@@ -2639,6 +2667,7 @@ function boot() {
         {
           fisheyeAppearance: slotAppearance,
           phantomAppearance: slotAppearance,
+          screenMaskLayout: slotAppearance?.screenMaskLayout,
           mangaFrameId: slotAppearance?.mangaBubbleStyle,
           mangaOccupancy: workbenchMangaOccupancy,
           mangaTailTarget: mangaTailTarget(),

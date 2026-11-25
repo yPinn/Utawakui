@@ -309,39 +309,48 @@ describe('output handlers', () => {
     expect(controlFisheyeEffects).toHaveBeenCalledOnce();
   });
 
-  it('persists a development template in dev and projects the default in other builds', async () => {
-    const slot = { templateId: 'textured-credits', settings: {} };
-    function handlers(isDev) {
-      const ipcMain = createIpcMain();
-      const setOverlaySlots = vi.fn();
-      registerOutputHandlers({
-        ipcMain,
-        server: { setOverlaySlots },
-        getConfig: () => ({}),
-        resolveDownloadDir: () => dir,
-        isDev,
-        developmentTemplateIds: ['textured-credits'],
+  it.each(['cinema-frame', 'framed-vertical', 'cinema-letterbox'])(
+    'persists %s in dev and projects the default in other builds',
+    async (templateId) => {
+      const slot = { templateId, settings: {} };
+      function handlers(isDev) {
+        const ipcMain = createIpcMain();
+        const setOverlaySlots = vi.fn();
+        registerOutputHandlers({
+          ipcMain,
+          server: { setOverlaySlots },
+          getConfig: () => ({}),
+          resolveDownloadDir: () => dir,
+          isDev,
+        });
+        return { handlers: ipcMain.handlers, setOverlaySlots };
+      }
+      const dev = handlers(true);
+      await dev.handlers.get('output-slots:upsert')(null, 'lyrics', slot);
+      expect(dev.setOverlaySlots).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          lyrics: expect.objectContaining({ templateId: 'cinema-frame' }),
+        }),
+      );
+      const release = handlers(false);
+      expect(await release.handlers.get('output-slots:list')()).toMatchObject({
+        slots: { lyrics: { templateId: 'karaoke-stack' } },
       });
-      return { handlers: ipcMain.handlers, setOverlaySlots };
-    }
-    const dev = handlers(true);
-    await dev.handlers.get('output-slots:upsert')(null, 'lyrics', slot);
-    expect(dev.setOverlaySlots).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        lyrics: expect.objectContaining({ templateId: slot.templateId }),
-      }),
-    );
-    const release = handlers(false);
-    expect(await release.handlers.get('output-slots:list')()).toMatchObject({
-      slots: { lyrics: { templateId: 'karaoke-stack' } },
-    });
-    await expect(
-      release.handlers.get('output-slots:upsert')(null, 'lyrics', slot),
-    ).rejects.toThrow('Invalid output slot');
-    expect(await dev.handlers.get('output-slots:list')()).toMatchObject({
-      slots: { lyrics: { templateId: 'textured-credits' } },
-    });
-  });
+      await expect(
+        release.handlers.get('output-slots:upsert')(null, 'lyrics', slot),
+      ).rejects.toThrow('Invalid output slot');
+      expect(await dev.handlers.get('output-slots:list')()).toMatchObject({
+        slots: {
+          lyrics: {
+            templateId: 'cinema-frame',
+            ...(templateId !== 'cinema-frame' && {
+              settings: { screenMaskLayout: templateId },
+            }),
+          },
+        },
+      });
+    },
+  );
 
   it('keeps Textured Credits in release builds now that it has shipped', async () => {
     const ipcMain = createIpcMain();

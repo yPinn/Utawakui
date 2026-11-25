@@ -56,6 +56,13 @@
         "language": "中文、日文"
       }
     },
+    "cinemaFrame": {
+      "name": "電影畫幅",
+      "facts": {
+        "direction": "圓角視窗直書／寬銀幕字幕",
+        "language": "各種語言"
+      }
+    },
     "texturedCredits": {
       "name": "紋理顯字",
       "facts": {
@@ -699,6 +706,10 @@
           "chromaticDepth": "樣式 3｜右下錯位",
           "cycle": "三款依句序切換"
         }
+      },
+      "screenMaskLayout": {
+        "label": "畫幅樣式",
+        "options": { "framedVertical": "圓角視窗", "cinemaLetterbox": "寬銀幕" }
       },
       "phantomMode": {
         "label": "呈現方式",

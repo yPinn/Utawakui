@@ -125,6 +125,16 @@ export function createOutputPreviewScene({
     ? globalThis.structuredClone(suppliedSnapshot)
     : createOutputPreviewSnapshot();
   const appearance = normalizeOutputAppearance(settings, { templateId });
+  if (!suppliedSnapshot && templateId === 'cinema-frame') {
+    const samples =
+      appearance.screenMaskLayout === 'framed-vertical'
+        ? ['夜の窓に灯る\n風が止むまで', '静かな街の向こう\n朝を待つ']
+        : ['夜明けまで、ここで待っている', '街の灯りが またひとつ消える'];
+    snapshot.lyrics.source.language = 'ja';
+    for (const [index, text] of samples.entries())
+      snapshot.lyrics.lines[index].text = text;
+    delete snapshot.lyrics.reading;
+  }
   if (
     !suppliedSnapshot &&
     templateId === 'ornate-vertical' &&

@@ -25,6 +25,10 @@ const TEMPLATE_MODULES = Object.freeze({
       '/overlay/vendor/pixi-filters.js',
     ],
   },
+  'cinema-frame': {
+    load: () => import('./screenMask.mjs'),
+    stylesheet: '/overlay/lyrics/screenMask.css',
+  },
 });
 
 const loadedModules = new Map();
@@ -94,7 +98,7 @@ export function loadLyricsTemplateModule(
   documentApi = globalThis.document,
 ) {
   const entry = TEMPLATE_MODULES[templateId];
-  if (!entry || loadedModules.has(templateId)) return null;
+  if (!entry || lyricsTemplateModule(templateId)) return null;
   if (!pendingLoads.has(templateId)) {
     const pending = Promise.all([
       entry.load(),

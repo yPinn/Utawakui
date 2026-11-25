@@ -915,6 +915,31 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     expect(html).not.toContain('output-appearance-surface');
   });
 
+  it('places the saved Cinema Frame style in the layout inspector', async () => {
+    const id = 'cinema-frame';
+    const appearanceFields = fieldsFor(id);
+    const html = await renderRegisteredTemplate(
+      id,
+      {
+        id,
+        kind: 'lyrics',
+        name: 'Cinema Frame',
+        appearanceFields,
+        editableAppearanceKeys: appearanceFields.map(({ key }) => key),
+      },
+      { screenMaskLayout: 'cinema-letterbox' },
+    );
+
+    expect(html).toContain('畫幅樣式');
+    expect(html).toContain('output-appearance-screenMaskLayout');
+    expect(html).toContain('寬銀幕');
+    expect(
+      outputInspectorTabs(appearanceFields)
+        .find(({ id }) => id === 'layout')
+        .groups.flatMap(({ fields }) => fields.map(({ key }) => key)),
+    ).toContain('screenMaskLayout');
+  });
+
   it('shows the Manga-only furigana checkbox with the approved wording', async () => {
     const html = await renderToString(
       createSSRApp({

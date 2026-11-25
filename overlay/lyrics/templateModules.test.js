@@ -42,6 +42,7 @@ describe('lyrics template modules', () => {
       'fisheye-lens',
       'phantom-thieves',
       'textured-credits',
+      'cinema-frame',
     ]);
   });
 
@@ -60,6 +61,18 @@ describe('lyrics template modules', () => {
       null,
     );
     expect(lyricsTemplateModule('karaoke-stack')).toBe(null);
+  });
+
+  it('keeps Cinema Frame pending until its stylesheet is ready', async () => {
+    const document = fakeDocument();
+    const pending = loadLyricsTemplateModule('cinema-frame', document);
+    expect(loadLyricsTemplateModule('cinema-frame', document)).toBe(pending);
+    expect(lyricsTemplateModule('cinema-frame')).toBeNull();
+    const module = await pending;
+    expect(lyricsTemplateModule('cinema-frame')).toBe(module);
+    expect(document.links.map(({ href }) => href)).toEqual([
+      '/overlay/lyrics/screenMask.css',
+    ]);
   });
 
   it('loads code and stylesheet once, then reports the template as ready', async () => {

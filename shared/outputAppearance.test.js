@@ -533,6 +533,7 @@ describe('output appearance schema', () => {
       chalkboardRule: 'shown',
       chalkboardRuleColor: '#fffdfa',
       positionAnchor: 'center-right',
+      screenMaskLayout: 'framed-vertical',
       positionOffsetX: 0,
       positionOffsetY: 0,
       contrastStyle: 'balanced',

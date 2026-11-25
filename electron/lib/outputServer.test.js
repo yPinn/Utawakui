@@ -654,6 +654,7 @@ describe('outputServer', () => {
         '/overlay/lyrics/lyricsFine.mjs',
         '/overlay/lyrics/lyricsFit.mjs',
         '/overlay/lyrics/chalkboardVertical.mjs',
+        '/overlay/lyrics/screenMask.mjs',
         '/overlay/lyrics/fisheyeLens.mjs',
         '/overlay/lyrics/phantomThieves.mjs',
         '/overlay/lyrics/fisheyeEffects.mjs',
@@ -673,6 +674,13 @@ describe('outputServer', () => {
     );
     expect(style.ok).toBe(true);
     expect(await style.text()).toContain('.phantom-thieves');
+    const maskStyle = await fetch(
+      `${status.httpUrl}/overlay/lyrics/screenMask.css`,
+    );
+    expect(maskStyle.ok).toBe(true);
+    expect(await maskStyle.text()).toContain(
+      "[data-screen-mask='cinema-letterbox']",
+    );
     const kineticStyle = await fetch(
       `${status.httpUrl}/overlay/lyrics/kineticPop.css`,
     );

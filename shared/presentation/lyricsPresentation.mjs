@@ -282,6 +282,14 @@ const LYRICS_PRESENTATION_PROFILES = Object.freeze({
       outputAppearanceFieldKeysForTemplate('chalkboard-vertical'),
     ),
   }),
+  'cinema-frame': Object.freeze({
+    id: 'cinema-frame',
+    version: LYRICS_PRESENTATION_PROFILE_VERSION,
+    available: true,
+    editableAppearanceKeys: Object.freeze(
+      outputAppearanceFieldKeysForTemplate('cinema-frame'),
+    ),
+  }),
   'phantom-thieves': Object.freeze({
     id: 'phantom-thieves',
     version: LYRICS_PRESENTATION_PROFILE_VERSION,
@@ -330,6 +338,7 @@ const TEMPLATE_PROFILE_IDS = Object.freeze({
   'ornate-vertical': 'ornate-vertical',
   'chalkboard-vertical': 'chalkboard-vertical',
   'centered-vertical': 'centered-vertical',
+  'cinema-frame': 'cinema-frame',
   'fisheye-lens': 'fisheye-lens',
   'phantom-thieves': 'phantom-thieves',
   'textured-credits': 'textured-credits',
@@ -2316,6 +2325,7 @@ export function compileLyricsPresentationDocument(document = {}, options = {}) {
         'ornate-vertical',
         'chalkboard-vertical',
         'centered-vertical',
+        'cinema-frame',
         'fisheye-lens',
         'phantom-thieves',
         'textured-credits',

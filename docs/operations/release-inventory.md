@@ -562,6 +562,12 @@ artwork or unpacked payload.
 The Gallery JPEG is a derived capture of the synthetic test scene. Vite bundles
 the image into `dist/` and leaves the source provenance catalog outside the package.
 
+The Cinema Frame development entry uses the exact routes
+`/overlay/lyrics/screenMask.mjs` and `/overlay/lyrics/screenMask.css` for both frame
+styles. The existing overlay packaging glob includes both files, and Vite
+bundles one synthetic Gallery JPEG. Release builds exclude Cinema Frame from
+template selection and fall back to the default Lyrics template when reading a dev slot.
+
 Fisheye Lens adds exact routes for `overlay/lyrics/fisheyeLens.mjs`,
 `shared/browser/fisheyePaint.mjs`, `shared/browser/fisheyeMotion.mjs` and `shared/presentation/fisheyeLyrics.mjs`.
 They use the existing overlay and shared package rules. The Gallery and the

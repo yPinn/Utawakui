@@ -738,6 +738,16 @@ const FIELD_DEFINITIONS = [
     options: [{ id: 'straight' }, { id: 'subtle-offset' }],
   }),
   fieldDefinition('layout', {
+    key: 'screenMaskLayout',
+    family: 'layout',
+    tier: 'basic',
+    reflow: true,
+    order: 10,
+    control: 'select',
+    defaultValue: 'framed-vertical',
+    options: [{ id: 'framed-vertical' }, { id: 'cinema-letterbox' }],
+  }),
+  fieldDefinition('layout', {
     key: 'phantomMode',
     family: 'layout',
     tier: 'basic',
@@ -1295,6 +1305,22 @@ const TEMPLATE_OVERRIDES = {
       },
     },
   },
+  'cinema-frame': {
+    keys: ['screenMaskLayout', 'fontFamily', 'fontScale', 'textColor'],
+    fields: {
+      textColor: { defaultValue: '#fffdfa' },
+      fontFamily: {
+        defaultValue: 'template',
+        optionIds: [
+          'template',
+          'lyrics-auto',
+          'chen-yu-luo-yan',
+          'klee-one',
+          'open-huninn',
+        ],
+      },
+    },
+  },
   'chalkboard-vertical': {
     keys: [
       'fontFamily',
@@ -1418,6 +1444,14 @@ const AUTHORED_FONT_REM = {
   'centered-vertical': { small: 2.5, medium: 3, large: 3.5 },
   'chalkboard-vertical': { small: 2.5, medium: 3, large: 3.5 },
 };
+const SCREEN_MASK_FONT_REM = {
+  'framed-vertical': { small: 2.25, medium: 2.75, large: 3.25 },
+  'cinema-letterbox': { small: 2, medium: 2.5, large: 3 },
+};
+
+export function outputScreenMaskLayout(value) {
+  return value === 'cinema-letterbox' ? value : 'framed-vertical';
+}
 
 export function outputFontScaleRatio(
   { fontScale, fontScaleAdjustment = 100 } = {},
@@ -1427,7 +1461,13 @@ export function outputFontScaleRatio(
 }
 
 export function outputAuthoredFontRem(templateId, appearance) {
-  const size = AUTHORED_FONT_REM[templateId]?.[appearance.fontScale];
+  const sizes =
+    templateId === 'cinema-frame'
+      ? SCREEN_MASK_FONT_REM[
+          outputScreenMaskLayout(appearance.screenMaskLayout)
+        ]
+      : AUTHORED_FONT_REM[templateId];
+  const size = sizes?.[appearance.fontScale];
   return size === undefined
     ? undefined
     : (size * (appearance.fontScaleAdjustment ?? 100)) / 100;
@@ -1572,6 +1612,17 @@ export function outputFontFamilyCss(
     } else stack = TEMPLATE_FONT_STACKS[templateId] ?? SYSTEM_SANS;
   }
   return selectedFamily ? `${selectedFamily}, ${stack}` : stack;
+}
+
+export function outputScreenMaskFontFamilyCss(appearance, language) {
+  const { fontFamily, screenMaskLayout } = appearance;
+  const preset =
+    !fontFamily || fontFamily === 'template'
+      ? outputScreenMaskLayout(screenMaskLayout) === 'cinema-letterbox'
+        ? 'serif'
+        : 'lyrics-auto'
+      : fontFamily;
+  return outputFontFamilyCss(preset, 'cinema-frame', language);
 }
 
 export const OUTPUT_APPEARANCE_FIELDS = Object.freeze(
@@ -1730,6 +1781,12 @@ export function sanitizeOutputAppearanceSetting(key, value, options = {}) {
     (baseField.family === 'asset' || baseField.group === 'portrait') &&
     options.templateId &&
     !templateConfig(options.templateId).keys.includes(key)
+  )
+    return undefined;
+  if (
+    key === 'screenMaskLayout' &&
+    options.templateId &&
+    options.templateId !== 'cinema-frame'
   )
     return undefined;
   let sanitized;

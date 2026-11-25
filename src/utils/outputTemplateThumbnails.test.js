@@ -31,7 +31,12 @@ describe('bundled output template thumbnails', () => {
         record.sha256,
       );
       expect(record.humanReview).toBe('not-tested');
-      if (record.content === 'style-reference') {
+      if (templateValues.developmentTemplateIds.includes(templateId)) {
+        expect(record.content).toBe('synthetic-template-preview');
+        expect(record.delivery).toBe('development-only');
+        expect(record.rights).toBe('project-owned-synthetic-artwork');
+        expect(record.origin).toBeTruthy();
+      } else if (record.content === 'style-reference') {
         blocked.push(templateId);
         expect(record.delivery).toBe('blocked-G01');
         expect(record.rights).toBe('unverified');

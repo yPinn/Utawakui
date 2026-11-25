@@ -56,6 +56,7 @@ const SAFE_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 const SAFE_SETTING_KEY_RE = /^[A-Za-z][A-Za-z0-9._-]*$/;
 const SLOT_IDS = new Set(OUTPUT_TEMPLATE_VALUES.slots.map((slot) => slot.id));
 const TEMPLATE_KINDS = OUTPUT_TEMPLATE_VALUES.templateKinds;
+const TEMPLATE_ALIASES = OUTPUT_TEMPLATE_VALUES.templateAliases;
 const WIDGET_CAPTURE_SIZE_IDS = new Set(
   OUTPUT_CAPTURE_VALUES.widgetSizes.map((size) => size.id),
 );
@@ -156,7 +157,9 @@ function sanitizeOutputSlot(kindValue, value) {
     return null;
   }
 
-  const templateId = safeId(value.templateId);
+  const savedId = safeId(value.templateId);
+  const alias = Object.hasOwn(TEMPLATE_ALIASES, savedId);
+  const templateId = alias ? TEMPLATE_ALIASES[savedId] : savedId;
   if (!templateId || TEMPLATE_KINDS[templateId] !== kind) return null;
 
   const styleSetIds = [];
@@ -172,6 +175,7 @@ function sanitizeOutputSlot(kindValue, value) {
   }
 
   const settings = sanitizeSettings(value.settings, templateId);
+  if (alias) settings.screenMaskLayout = savedId;
   settings.captureSize = normalizeCaptureSize(
     kind,
     templateId,
@@ -243,6 +247,21 @@ function normalizeAppearanceHistory(history) {
         .filter(([id, owner]) => owner === kind && record.templates?.[id])
         .map(([id]) => [id, templateAppearance(record.templates[id], id)]),
     );
+    for (const [previousId, id] of Object.entries(TEMPLATE_ALIASES)) {
+      if (
+        TEMPLATE_KINDS[id] !== kind ||
+        templates[id] ||
+        !record.templates?.[previousId]
+      )
+        continue;
+      templates[id] = templateAppearance(
+        {
+          ...record.templates[previousId],
+          screenMaskLayout: previousId,
+        },
+        id,
+      );
+    }
     entries.push([kind, { shared, templates }]);
   }
   return Object.fromEntries(entries);
@@ -483,7 +502,12 @@ function upsertOutputSlot(dir, kind, value) {
       current,
       slot,
       document.appearanceHistory?.[kind],
-      value.settings,
+      Object.hasOwn(TEMPLATE_ALIASES, safeId(value.templateId))
+        ? {
+            ...value.settings,
+            screenMaskLayout: slot.settings.screenMaskLayout,
+          }
+        : value.settings,
     );
     slot.settings = recalled.settings;
     document.appearanceHistory = {

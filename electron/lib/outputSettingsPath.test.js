@@ -248,6 +248,7 @@ describe('Output settings path', () => {
           FISHEYE_FIELDS.has(field.key) ||
           PHANTOM_FIELDS.has(field.key) ||
           MANGA_FIELDS.has(field.key) ||
+          field.key === 'screenMaskLayout' ||
           field.key === 'ornateColumnMode' ||
           // Colour and transparency combine into one --ovl-setlist-background value.
           field.key === 'setlistBackgroundColor' ||

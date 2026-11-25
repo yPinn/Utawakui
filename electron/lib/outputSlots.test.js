@@ -195,6 +195,35 @@ describe('outputSlots', () => {
     );
   });
 
+  it('folds a saved film template into Cinema Frame and retains its appearance when changing layout', () => {
+    const settings = {
+      fontScale: 'large',
+      fontFamily: 'serif',
+      textColor: '#abcdef',
+    };
+    fs.writeFileSync(
+      filePath,
+      JSON.stringify({
+        version: 5,
+        slots: { lyrics: { templateId: 'cinema-letterbox', settings } },
+      }),
+    );
+    const current = loadOutputSlots(dir).slots.lyrics;
+    expect(current).toMatchObject({
+      templateId: 'cinema-frame',
+      settings: { ...settings, screenMaskLayout: 'cinema-letterbox' },
+    });
+    upsertOutputSlot(dir, 'lyrics', {
+      ...current,
+      settings: { ...current.settings, screenMaskLayout: 'framed-vertical' },
+    });
+    const { slots } = loadOutputSlots(dir);
+    expect(projectPublicOutputSlots(slots).lyrics).toMatchObject({
+      templateId: 'cinema-frame',
+      settings: { ...settings, screenMaskLayout: 'framed-vertical' },
+    });
+  });
+
   it('replaces retired saved templates and rejects selecting them again', () => {
     fs.writeFileSync(
       filePath,

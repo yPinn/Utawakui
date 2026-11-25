@@ -172,6 +172,100 @@ function kineticLineTracks(line) {
   return line.children.flatMap((row) => row.children);
 }
 
+it.each(['framed-vertical', 'cinema-letterbox'])(
+  'keeps the %s mask across instrumental gaps and clears it when playback ends',
+  async (screenMaskLayout) => {
+    const templateId = 'cinema-frame';
+    await loadLyricsTemplateModule(templateId, null);
+    const fixture = domElements();
+    const elements = {
+      ...fixture,
+      screenMask: element(fixture.root.ownerDocument),
+    };
+    const snapshot = createOutputPreviewSnapshot();
+    snapshot.lyrics.lines = [
+      { text: '夜明けまで', startMs: 1000, endMs: 2000 },
+    ];
+    snapshot.playback.status = 'paused';
+    snapshot.playback.positionMs = 1500;
+    const draw = () =>
+      renderLyricsFrame(
+        elements,
+        selectLyricsOverlayFrame(snapshot, { templateId }),
+        { templateId, screenMaskLayout },
+      );
+    draw();
+    const mask = elements.screenMask.lastElementChild;
+    expect(mask.lastElementChild.attributes['fill-rule']).toBe('evenodd');
+    expect(elements.current.textContent).toBe('夜明けまで');
+
+    snapshot.playback.positionMs = 2500;
+    draw();
+    expect(elements.root.hidden).toBe(false);
+    expect(elements.screenMask.lastElementChild).toBe(mask);
+    expect(elements.current.hidden).toBe(true);
+
+    snapshot.playback.status = 'ended';
+    draw();
+    expect(elements.root.hidden).toBe(true);
+    expect(elements.screenMask.children).toEqual([]);
+  },
+);
+
+it('samples the letterbox fade and stops it on a layout change in Cinema Frame', async () => {
+  const templateId = 'cinema-frame';
+  await loadLyricsTemplateModule(templateId, null);
+  const fixture = domElements();
+  const elements = {
+    ...fixture,
+    screenMask: element(fixture.root.ownerDocument),
+  };
+  const timeline = {
+    time: vi.fn(() => 0),
+    kill: vi.fn(),
+    play: vi.fn(),
+    fromTo: vi.fn(),
+    to: vi.fn(),
+  };
+  timeline.timeScale = vi.fn(() => timeline);
+  const gsap = { timeline: vi.fn(() => timeline) };
+  const frame = {
+    visible: true,
+    currentText: '待在原地',
+    screenMask: {
+      visible: true,
+      playing: true,
+      elapsedMs: 42,
+      durationMs: 800,
+      rate: 2,
+    },
+  };
+  renderLyricsFrame(elements, frame, {
+    templateId,
+    gsap,
+    screenMaskLayout: 'cinema-letterbox',
+  });
+  expect(timeline.time).toHaveBeenCalledWith(0.042);
+  expect(timeline.timeScale).toHaveBeenCalledWith(2);
+  expect(timeline.to.mock.calls[0][2]).toBeCloseTo(0.65);
+  const letterboxMask = elements.screenMask.lastElementChild;
+  renderLyricsFrame(elements, frame, {
+    templateId,
+    gsap,
+    screenMaskLayout: 'framed-vertical',
+  });
+  expect(timeline.kill).toHaveBeenCalledOnce();
+  expect(elements.root.dataset.screenMask).toBe('framed-vertical');
+  expect(elements.screenMask.lastElementChild).not.toBe(letterboxMask);
+  expect(elements.current.textContent).toBe('待在原地');
+  renderLyricsFrame(elements, frame, {
+    templateId: 'centered-vertical',
+    reducedMotion: true,
+  });
+  expect(elements.root.dataset.screenMask).toBeUndefined();
+  expect(elements.screenMask.hidden).toBe(true);
+});
+
 it('discards lyrics held during the initial template load when Output disconnects', async () => {
   const elements = domElements();
   const documentApi = elements.root.ownerDocument;
