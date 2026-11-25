@@ -1,10 +1,11 @@
 @media (prefers-reduced-motion: reduce) {
-  .obs-template-mockup__setlist-history-viewport[data-history-overflow='true'][data-history-motion='running']
+  .obs-template-mockup
+    .obs-template-mockup__setlist-history-viewport[data-history-overflow='true'][data-history-motion='running']
     .obs-template-mockup__setlist-history-list,
-  .obs-template-mockup__vinyl-record,
-  .obs-template-mockup[data-motion='playing']
+  .obs-template-mockup .obs-template-mockup__vinyl-record,
+  .obs-template-mockup[data-kind='lyrics'][data-motion='playing']
     .obs-template-mockup__ktv-line-fill,
-  .obs-template-mockup[data-motion='playing']
+  .obs-template-mockup[data-kind='lyrics'][data-motion='playing']
     .obs-template-mockup__ktv-count-in,
   .obs-template-mockup[data-motion='playing']
     .obs-template-mockup__progress-fill {

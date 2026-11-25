@@ -1,9 +1,23 @@
 import { readFileSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
+import { h, nextTick } from 'vue';
+import { describe, expect, it, vi } from 'vitest';
+import { attachClientRender, mount } from '../ui/uiTestHost.js';
+import KineticPopPreview from './previews/KineticPopPreview.vue';
 import {
   readObsTemplateMockupSource,
   readObsTemplatePreviewSource,
 } from './obsTemplateMockupSource.mjs';
+
+const ink = vi.hoisted(() => ({ render: vi.fn(), clear: vi.fn() }));
+vi.mock('../../../shared/browser/kineticPop.mjs', () => ({
+  renderKineticPopPresentation: ink.render,
+  clearKineticPopPresentation: ink.clear,
+}));
+attachClientRender(
+  KineticPopPreview,
+  './previews/KineticPopPreview.vue',
+  import.meta.url,
+);
 
 const styles = readFileSync(
   new URL('../../../overlay/lyrics/kineticPop.css', import.meta.url),
@@ -11,6 +25,73 @@ const styles = readFileSync(
 );
 
 describe('Kinetic Pop gallery mockup', () => {
+  it('sizes the glyph layers before the first paint and keeps replay running on resize', async () => {
+    vi.useFakeTimers();
+    ink.render.mockClear();
+    ink.clear.mockClear();
+    const preference = Object.assign(new EventTarget(), { matches: false });
+    vi.stubGlobal('window', { matchMedia: () => preference });
+    let onResize;
+    const disconnect = vi.fn();
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(callback) {
+          onResize = callback;
+        }
+        observe() {}
+        disconnect() {
+          disconnect();
+        }
+      },
+    );
+    const { app } = mount({
+      render: () =>
+        h(KineticPopPreview, {
+          animated: true,
+          scene: { lyrics: { current: 'あの夏の声' } },
+        }),
+    });
+
+    try {
+      expect(ink.render).not.toHaveBeenCalled();
+      onResize([{ contentRect: { width: 480 } }]);
+      await nextTick();
+      expect(ink.render).toHaveBeenCalledTimes(1);
+      expect(ink.render.mock.lastCall[2].reducedMotion).toBe(false);
+      expect(vi.getTimerCount()).toBe(1);
+      const stage = ink.render.mock.lastCall[0].root;
+      expect(stage.props.style['--kinetic-rem']).toBe('4px');
+
+      onResize([{ contentRect: { width: 720 } }]);
+      await nextTick();
+      expect(stage.props.style['--kinetic-rem']).toBe('6px');
+      expect(ink.render).toHaveBeenCalledTimes(1);
+      expect(vi.getTimerCount()).toBe(1);
+
+      preference.matches = true;
+      preference.dispatchEvent(new Event('change'));
+      await nextTick();
+      expect(ink.render).toHaveBeenCalledTimes(2);
+      expect(ink.render.mock.lastCall[2].reducedMotion).toBe(true);
+      expect(vi.getTimerCount()).toBe(0);
+
+      preference.matches = false;
+      preference.dispatchEvent(new Event('change'));
+      expect(ink.render).toHaveBeenCalledTimes(3);
+      expect(vi.getTimerCount()).toBe(1);
+    } finally {
+      app.unmount();
+      vi.unstubAllGlobals();
+      const pending = vi.getTimerCount();
+      vi.useRealTimers();
+      expect(pending).toBe(0);
+    }
+    expect(disconnect).toHaveBeenCalledOnce();
+    expect(ink.clear).toHaveBeenCalledTimes(1);
+    expect(ink.render).toHaveBeenCalledTimes(3);
+  });
+
   it('runs the same renderer, materials and reduced-motion lifecycle as Output', () => {
     const preview = readObsTemplatePreviewSource('KineticPop');
     const source = readObsTemplateMockupSource();
@@ -46,7 +127,6 @@ describe('Kinetic Pop gallery mockup', () => {
     expect(styles).toMatch(
       /\[data-ovl-scale='large'\]\s*\.lyrics-overlay__kinetic-line\[data-kinetic-material='candy-rim'\]\s*\{\s*font-size: 1em;/u,
     );
-    expect(source).toContain('--kinetic-rem: var(--obs-canvas-rem)');
     expect(source).toContain(
       '--kinetic-safe-inline: calc(4 * var(--kinetic-rem))',
     );

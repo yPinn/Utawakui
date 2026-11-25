@@ -10,12 +10,12 @@
   "templates": {
     "fisheye-lens": {
       "file": "fisheye-lens.jpg",
-      "sha256": "a497ef916b09ef4985fa545ae8f666d9989ad571b7a59cc79c0ead09a791d8dd",
-      "content": "current-runtime-capture",
-      "rights": "project-owned-runtime-and-synthetic-lyrics",
-      "delivery": "pending-user-visual-acceptance",
+      "sha256": "2c616635bb8ec8a64aaef8c1d76c6ea9ddd6b2a8a4833f92d68fe5f0988980da",
+      "content": "style-reference",
+      "rights": "unverified",
+      "delivery": "blocked-G01",
       "humanReview": "not-tested",
-      "origin": "Electron 1920 × 1080 Lyrics Browser Source canvas with synthetic lyrics and a procedural backdrop, scaled to 1280 × 720 JPEG."
+      "origin": "User-supplied deco miku.jpg, selected as the Gallery cover on 2026-11-25. Original 1200 × 675 JPEG bytes preserved."
     },
     "ribbon-setlist": {
       "file": "ribbon-setlist.png",
@@ -44,11 +44,12 @@
     },
     "kinetic-pop": {
       "file": "kinetic-pop.jpg",
-      "sha256": "cdd5e6945e6c2876c76c528d59815a79fc500b99df9d530eba838c5e92f528a5",
-      "content": "legacy-programmatic-capture",
-      "rights": "derived-project-artwork-per-legacy-readme",
-      "delivery": "pending-current-runtime-review",
-      "humanReview": "not-tested"
+      "sha256": "06da4b2725e8f0e6b93924a78604bbb26b241aa6bc9c319e7fead9bf954c7986",
+      "content": "style-reference",
+      "rights": "unverified",
+      "delivery": "blocked-G01",
+      "humanReview": "not-tested",
+      "origin": "User-supplied ado ashura.jpg, selected as the Gallery cover on 2026-11-25. Original 736 × 414 JPEG bytes preserved."
     },
     "centered-vertical": {
       "file": "centered-vertical.jpg",
@@ -86,16 +87,12 @@
     },
     "manga-frame": {
       "file": "manga-frame.jpg",
-      "sha256": "597466d02926b9a4b00441aaf8268d07f5d082ceece13ef9f202301a2444c7a5",
-      "content": "current-programmatic-render",
-      "rights": "project-owned-runtime-and-synthetic-lyrics",
-      "delivery": "pending-user-visual-acceptance",
+      "sha256": "535a111b87dec823ad1379b07c5cdb55d5fa1893fe261b2702e475d06d79889d",
+      "content": "style-reference",
+      "rights": "unverified",
+      "delivery": "blocked-G01",
       "humanReview": "not-tested",
-      "origin": "Default showcase-t1-v1 scene at 5000 ms. Shared Manga Frame SVG, placement, vertical lyric columns and bundled GenEi Antique, composed at 1920 × 1080 with a 7 px stroke over #202020 and scaled to 1280 × 720.",
-      "previousReference": {
-        "commit": "cc9af12c02639435575093ef29220bb8ccaf3c1d",
-        "sha256": "535a111b87dec823ad1379b07c5cdb55d5fa1893fe261b2702e475d06d79889d"
-      }
+      "origin": "Original black-and-white manga reference restored from Git commit cc9af12c02639435575093ef29220bb8ccaf3c1d on 2026-11-25. Original 750 × 422 JPEG bytes preserved."
     },
     "art-card": {
       "file": "art-card.jpg",
@@ -133,13 +130,22 @@
       "origin": "User-provided kqtoc.jpg, requested as Gallery thumbnail on 2026-10-24; original bytes preserved"
     },
     "phantom-thieves": {
-      "file": "phantom-thieves.png",
-      "sha256": "23b2ff1f8e92a62b22c685e480a28e871815cb21425ffc524751074567e15dd3",
+      "file": "phantom-thieves.jpg",
+      "sha256": "da99bc7125df4f58734a5a8ab44cca879049284c6326579b990efa55a5e20ba6",
       "content": "style-reference",
       "rights": "unverified",
       "delivery": "blocked-G01",
       "humanReview": "not-tested",
-      "origin": "User-provided Take Your Heart image requested as the Gallery thumbnail on 2026-11-18. Original PNG bytes preserved."
+      "origin": "User-supplied take your heart.jpg, selected as the Gallery cover on 2026-11-25. Original 1200 × 881 JPEG bytes preserved."
+    },
+    "textured-credits": {
+      "file": "textured-credits.jpg",
+      "sha256": "71f11ab3a9c27e2ea5d0d369c6811db83b218f1731696ffa12c89f5cf88ab160",
+      "content": "style-reference",
+      "rights": "unverified",
+      "delivery": "blocked-G01",
+      "humanReview": "not-tested",
+      "origin": "User-supplied calculating.jpg, selected as the development-only template's Gallery cover on 2026-11-25. Original 734 × 453 JPEG bytes preserved."
     }
   }
 }

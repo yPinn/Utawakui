@@ -1,52 +1,33 @@
-// Shared canvas rules must precede every preview's own rules.
-import '../ObsTemplateMockup.base.css';
-import ArtCardPreview from './ArtCardPreview.vue';
-import ChalkboardVerticalPreview from './ChalkboardVerticalPreview.vue';
-import CenteredVerticalPreview from './CenteredVerticalPreview.vue';
-import CoverPlayerPreview from './CoverPlayerPreview.vue';
-import PhantomThievesPreview from './PhantomThievesPreview.vue';
-import FisheyeLensPreview from './FisheyeLensPreview.vue';
-import KaraokeStackPreview from './KaraokeStackPreview.vue';
-import KineticPopPreview from './KineticPopPreview.vue';
-import LiveStagePreview from './LiveStagePreview.vue';
-import MangaFramePreview from './MangaFramePreview.vue';
-import OrnateVerticalPreview from './OrnateVerticalPreview.vue';
-import QueueBoardPreview from './QueueBoardPreview.vue';
-import ReceiptSetlistPreview from './ReceiptSetlistPreview.vue';
-import RibbonSetlistPreview from './RibbonSetlistPreview.vue';
-import TicketStubPreview from './TicketStubPreview.vue';
-import TexturedCreditsPreview from './TexturedCreditsPreview.vue';
-
 // Each preview renders inside the shared ObsTemplateMockup canvas and takes
 // the same props: { scene, size, animated }.
 const TEMPLATE_PREVIEWS = Object.freeze({
-  'queue-board': QueueBoardPreview,
-  'receipt-setlist': ReceiptSetlistPreview,
-  'ribbon-setlist': RibbonSetlistPreview,
-  'karaoke-stack': KaraokeStackPreview,
-  'kinetic-pop': KineticPopPreview,
-  'ornate-vertical': OrnateVerticalPreview,
-  'chalkboard-vertical': ChalkboardVerticalPreview,
-  'centered-vertical': CenteredVerticalPreview,
-  'fisheye-lens': FisheyeLensPreview,
-  'phantom-thieves': PhantomThievesPreview,
-  'textured-credits': TexturedCreditsPreview,
-  'manga-frame': MangaFramePreview,
-  'live-stage': LiveStagePreview,
-  'art-card': ArtCardPreview,
-  'ticket-stub': TicketStubPreview,
-  'cover-player': CoverPlayerPreview,
+  'queue-board': () => import('./QueueBoardPreview.vue'),
+  'receipt-setlist': () => import('./ReceiptSetlistPreview.vue'),
+  'ribbon-setlist': () => import('./RibbonSetlistPreview.vue'),
+  'karaoke-stack': () => import('./KaraokeStackPreview.vue'),
+  'kinetic-pop': () => import('./KineticPopPreview.vue'),
+  'ornate-vertical': () => import('./OrnateVerticalPreview.vue'),
+  'chalkboard-vertical': () => import('./ChalkboardVerticalPreview.vue'),
+  'centered-vertical': () => import('./CenteredVerticalPreview.vue'),
+  'fisheye-lens': () => import('./FisheyeLensPreview.vue'),
+  'phantom-thieves': () => import('./PhantomThievesPreview.vue'),
+  'textured-credits': () => import('./TexturedCreditsPreview.vue'),
+  'manga-frame': () => import('./MangaFramePreview.vue'),
+  'live-stage': () => import('./LiveStagePreview.vue'),
+  'art-card': () => import('./ArtCardPreview.vue'),
+  'ticket-stub': () => import('./TicketStubPreview.vue'),
+  'cover-player': () => import('./CoverPlayerPreview.vue'),
 });
 
 const KIND_FALLBACK_PREVIEWS = Object.freeze({
-  setlist: QueueBoardPreview,
-  lyrics: KaraokeStackPreview,
+  setlist: TEMPLATE_PREVIEWS['queue-board'],
+  lyrics: TEMPLATE_PREVIEWS['karaoke-stack'],
 });
 
 export function outputTemplatePreviewFor(preset) {
   return (
     TEMPLATE_PREVIEWS[preset?.id] ??
     KIND_FALLBACK_PREVIEWS[preset?.kind] ??
-    ArtCardPreview
+    TEMPLATE_PREVIEWS['art-card']
   );
 }

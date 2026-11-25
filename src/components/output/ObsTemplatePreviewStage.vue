@@ -1,8 +1,9 @@
 <script setup>
-import { computed, shallowRef } from 'vue';
+import { computed, onErrorCaptured, shallowRef } from 'vue';
 import { useOutputPreviewMotion } from '../../composables/output/useOutputPreviewMotion.js';
 import ObsTemplateThumbnail from './ObsTemplateThumbnail.vue';
 import ObsPreviewCaption from './ObsPreviewCaption.vue';
+import { outputTemplatePreviewFor } from './previews/outputTemplatePreviews.js';
 import UiHint from '../ui/UiHint.vue';
 import { captureSizeForKind } from '../../constants/outputCaptureSizes.js';
 import { t } from '../../utils/i18n.js';
@@ -22,24 +23,41 @@ const loadedPreview = shallowRef(null);
 const livePreview = computed(() => {
   const preview = loadedPreview.value;
   return props.active && preview && preview.presetId === props.preset?.id
-    ? preview.component
+    ? preview
     : null;
+});
+
+onErrorCaptured(() => {
+  if (!loadedPreview.value) return;
+  loadedPreview.value = null;
+  previewFailed.value = true;
+  return false;
 });
 
 useOutputPreviewMotion({
   scene: () => props.preset?.id,
   animated: () => props.active && Boolean(props.preset),
   start() {
-    const presetId = props.preset?.id;
+    const preset = props.preset;
     let current = true;
-    import('./ObsTemplateMockup.vue').then(
-      ({ default: component }) => {
-        if (current) loadedPreview.value = { component, presetId };
-      },
-      () => {
+    async function loadPreview() {
+      try {
+        // Load shared canvas CSS before the selected template's styles.
+        const { default: component } = await import('./ObsTemplateMockup.vue');
+        if (!current) return;
+        const { default: templatePreview } =
+          await outputTemplatePreviewFor(preset)();
+        if (current)
+          loadedPreview.value = {
+            component,
+            templatePreview,
+            presetId: preset.id,
+          };
+      } catch {
         if (current) previewFailed.value = true;
-      },
-    );
+      }
+    }
+    void loadPreview();
     return () => {
       current = false;
     };
@@ -76,10 +94,11 @@ useOutputPreviewMotion({
         loading="eager"
       />
       <component
-        :is="livePreview"
+        :is="livePreview.component"
         v-else
         :key="preset?.id"
         :preset="preset"
+        :template-preview="livePreview.templatePreview"
         :scene="scene"
         size="thumbnail"
         :animated="true"

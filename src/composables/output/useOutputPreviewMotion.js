@@ -1,7 +1,13 @@
 import { onBeforeUnmount, onMounted, watch } from 'vue';
 
 // The Gallery owns the sample clock. Template renderers own their animations.
-export function useOutputPreviewMotion({ scene, animated, start, stop }) {
+export function useOutputPreviewMotion({
+  scene,
+  animated,
+  start,
+  stop,
+  renderStatic,
+}) {
   let preference;
   let dispose;
 
@@ -11,6 +17,7 @@ export function useOutputPreviewMotion({ scene, animated, start, stop }) {
     dispose = undefined;
     stop?.();
     if (animated() && !preference.matches) dispose = start();
+    else renderStatic?.();
   }
 
   onMounted(() => {

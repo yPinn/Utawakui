@@ -208,7 +208,7 @@ it.each([
     );
     expect(html).toContain('幻影怪盜');
     expect(html).toMatch(
-      /class="companion-output__summary".*<li class="ui-track".*src="[^"]*phantom-thieves[^"]*\.png".*companion-output-slot-lyrics-tab/su,
+      /class="companion-output__summary".*<li class="ui-track".*src="[^"]*phantom-thieves[^"]*\.jpg".*companion-output-slot-lyrics-tab/su,
     );
     expect(html).toMatch(
       /class="ui-tabs ui-tabs--folder[^"]*"[^>]*aria-orientation="horizontal".*class="companion-output__controls"/su,

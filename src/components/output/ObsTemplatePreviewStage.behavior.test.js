@@ -12,17 +12,29 @@ import {
   trigger,
 } from '../ui/uiTestHost.js';
 
-const lifecycle = vi.hoisted(() => ({ unmounts: 0 }));
+const lifecycle = vi.hoisted(() => ({ unmounts: 0, errorFor: null }));
+const loadPreview = vi.hoisted(() => vi.fn());
+vi.mock('./previews/outputTemplatePreviews.js', () => ({
+  outputTemplatePreviewFor:
+    ({ id }) =>
+    () =>
+      loadPreview(id),
+}));
 vi.mock('./ObsTemplateMockup.vue', () => ({
   default: {
-    props: ['preset', 'animated'],
+    props: ['preset', 'animated', 'templatePreview'],
     setup(props) {
       onUnmounted(() => lifecycle.unmounts++);
-      return () =>
-        h('div', {
+      return () => {
+        if (props.preset.id === lifecycle.errorFor) {
+          throw new Error('Preview render failed');
+        }
+        return h('div', {
           'data-live-preview': props.preset.id,
           'data-animated': props.animated,
+          'data-loaded-preview': props.templatePreview.id,
         });
+      };
     },
   },
 }));
@@ -83,6 +95,10 @@ beforeEach(() => {
   preference = Object.assign(new EventTarget(), { matches: false });
   vi.stubGlobal('window', { matchMedia: () => preference });
   lifecycle.unmounts = 0;
+  lifecycle.errorFor = null;
+  loadPreview
+    .mockReset()
+    .mockImplementation(async (id) => ({ default: { id } }));
 });
 
 afterEach(() => {
@@ -132,7 +148,9 @@ describe('automatic selected template preview', () => {
     expect(view.live()[0].props).toMatchObject({
       'data-live-preview': 'kinetic-pop',
       'data-animated': true,
+      'data-loaded-preview': 'kinetic-pop',
     });
+    expect(loadPreview.mock.calls).toEqual([['kinetic-pop']]);
     expect(findAll(view.root, (node) => node.type === 'button')).toHaveLength(
       0,
     );
@@ -160,6 +178,54 @@ describe('automatic selected template preview', () => {
     expect(view.live()).toHaveLength(0);
     expect(view.images()).toHaveLength(1);
     expect(lifecycle.unmounts).toBe(0);
+  });
+
+  it('keeps the cover while the selected module loads and ignores superseded loads', async () => {
+    const pending = Promise.withResolvers();
+    loadPreview.mockReturnValueOnce(pending.promise);
+    const view = setup();
+    await settlePreview();
+    expect(loadPreview.mock.calls).toEqual([['kinetic-pop']]);
+    expect(view.images()[0].props.src).toContain('kinetic-pop');
+
+    view.selected.value = presets[1];
+    await settlePreview();
+    expect(view.live()[0].props['data-loaded-preview']).toBe('ornate-vertical');
+
+    pending.resolve({ default: { id: 'kinetic-pop' } });
+    await settlePreview();
+    expect(view.live()[0].props['data-loaded-preview']).toBe('ornate-vertical');
+    expect(lifecycle.unmounts).toBe(0);
+  });
+
+  it('keeps the selected cover after a template import fails', async () => {
+    loadPreview.mockRejectedValueOnce(new Error('Preview import failed'));
+    const view = setup();
+    await settlePreview();
+    expect(view.live()).toHaveLength(0);
+    expect(view.images()[0].props.src).toContain('kinetic-pop');
+    expect(
+      findAll(view.root, (node) => node.props.role === 'status'),
+    ).toHaveLength(1);
+  });
+
+  it('returns to the cover after a preview render failure and previews the next selection', async () => {
+    lifecycle.errorFor = 'kinetic-pop';
+    const view = setup();
+
+    await settlePreview();
+    expect(view.live()).toHaveLength(0);
+    expect(view.images()[0].props.src).toContain('kinetic-pop');
+    expect(
+      findAll(view.root, (node) => node.props.role === 'status'),
+    ).toHaveLength(1);
+
+    view.selected.value = presets[1];
+    await settlePreview();
+    expect(view.live()[0].props['data-live-preview']).toBe('ornate-vertical');
+    expect(
+      findAll(view.root, (node) => node.props.role === 'status'),
+    ).toHaveLength(0);
   });
 
   it('starts on reveal and respects changes to the reduced-motion preference', async () => {

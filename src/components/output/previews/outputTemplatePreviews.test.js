@@ -6,12 +6,15 @@ import QueueBoardPreview from './QueueBoardPreview.vue';
 import { outputTemplatePreviewFor } from './outputTemplatePreviews.js';
 
 describe('output template preview registry', () => {
-  it('maps every bundled template id to its own preview', () => {
+  it('loads a distinct preview for every bundled template id', async () => {
     const ids = Object.keys(OUTPUT_TEMPLATE_VALUES.templateKinds);
-    const previews = ids.map((id) =>
-      outputTemplatePreviewFor({
-        id,
-        kind: OUTPUT_TEMPLATE_VALUES.templateKinds[id],
+    const previews = await Promise.all(
+      ids.map(async (id) => {
+        const load = outputTemplatePreviewFor({
+          id,
+          kind: OUTPUT_TEMPLATE_VALUES.templateKinds[id],
+        });
+        return (await load()).default;
       }),
     );
 
@@ -19,16 +22,13 @@ describe('output template preview registry', () => {
     expect(new Set(previews).size).toBe(ids.length);
   });
 
-  it('falls back by kind, then to the Now Playing preview', () => {
-    expect(outputTemplatePreviewFor({ id: 'unknown', kind: 'lyrics' })).toBe(
-      KaraokeStackPreview,
-    );
-    expect(outputTemplatePreviewFor({ id: 'unknown', kind: 'setlist' })).toBe(
-      QueueBoardPreview,
-    );
-    expect(outputTemplatePreviewFor({ id: 'unknown', kind: 'other' })).toBe(
-      ArtCardPreview,
-    );
-    expect(outputTemplatePreviewFor(null)).toBe(ArtCardPreview);
+  it.each([
+    [{ id: 'unknown', kind: 'lyrics' }, KaraokeStackPreview],
+    [{ id: 'unknown', kind: 'setlist' }, QueueBoardPreview],
+    [{ id: 'unknown', kind: 'other' }, ArtCardPreview],
+    [null, ArtCardPreview],
+  ])('falls back for %j', async (preset, expected) => {
+    const { default: preview } = await outputTemplatePreviewFor(preset)();
+    expect(preview).toBe(expected);
   });
 });

@@ -2,11 +2,9 @@
 .obs-template-mockup[data-template-id='kinetic-pop']
   .obs-template-mockup__content--lyrics {
   padding: 0;
-  font-size: var(--obs-canvas-rem);
 }
 
 .obs-template-mockup__kinetic-stage {
-  --kinetic-rem: var(--obs-canvas-rem);
   --kinetic-safe-inline: calc(4 * var(--kinetic-rem));
   --kinetic-safe-block: var(--kinetic-safe-inline);
   position: absolute;

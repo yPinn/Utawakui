@@ -19,9 +19,8 @@ ${fs.readFileSync(
 )}`;
 
     expect(source).toContain(
-      "import OrnateVerticalPreview from './OrnateVerticalPreview.vue';",
+      "'ornate-vertical': () => import('./OrnateVerticalPreview.vue')",
     );
-    expect(source).toContain("'ornate-vertical': OrnateVerticalPreview,");
     expect(source).toContain(':animated="animated"');
     expect(source).toContain(':scene="previewScene"');
   });

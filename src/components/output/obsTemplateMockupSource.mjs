@@ -21,7 +21,7 @@ export function readObsTemplatePreviewSource(name) {
 
 // Source-contract tests assert on template and CSS text together. Rebuild one
 // text from the shell, every preview, and the stylesheets in load order:
-// shared base, each preview's rules, then the shell's late overrides.
+// shared canvas rules, then each preview's rules.
 export function readObsTemplateMockupSource() {
   const shell = readSibling('ObsTemplateMockup.vue');
   const previewNames = readdirSync(
@@ -33,13 +33,12 @@ export function readObsTemplateMockupSource() {
     readSibling(`${PREVIEW_DIRECTORY}/${name}`),
   );
   const css = [
-    readSibling('ObsTemplateMockup.base.css'),
+    ...styleSources(shell).map(readSibling),
     ...previews.flatMap((vue) =>
       styleSources(vue).map((file) =>
         readSibling(`${PREVIEW_DIRECTORY}/${file}`),
       ),
     ),
-    ...styleSources(shell).map(readSibling),
   ].join('\n');
   const templateEnd = shell.indexOf('<style');
   return `${shell.slice(0, templateEnd)}\n${previews.join('\n')}\n<style>\n${css}</style>\n`;

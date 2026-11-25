@@ -16,25 +16,23 @@ Use a 16:9 image at 1280 × 720. Prefer WebP or AVIF and keep each image under
 that does not encode well in the preferred formats.
 
 Only one image format may exist for a template id. The renderer discovers these
-files through Vite. Every registered template must have a static image; missing
-or undecodable images show a lightweight placeholder without mounting a live
-preview. The Gallery's selected preview also starts with this static image and
-loads its dynamic mockup only after pointer dwell or an explicit play action.
+files through Vite. Every registered template has a static image. Missing or
+undecodable images show a lightweight placeholder. The selected template starts
+with its static image and plays its dynamic preview when Gallery details are open
+and the system allows motion. A preview failure returns to the static image.
 
-The `queue-board`, `kinetic-pop` and `ornate-vertical`
+The `queue-board` and `ornate-vertical`
 JPEGs were rendered from the existing programmatic templates and
 fixed sample scene at 1280 × 720 with animation disabled. They are derived
 project artwork, not additional third-party source images.
 
 ## Provenance and replacement review
 
-`provenance.json` maps every active template to the existing image hash and its
-content status. The original Manga Frame reference remains in Git history.
-Its current cover uses the template's shared SVG, placement and synthetic
-lyrics, with the 1920 × 1080 stroke scaled to 1280 × 720.
-Other templates (`karaoke-stack`, `live-stage`,
-`art-card`, `receipt-setlist`, `cover-player`, `ribbon-setlist`) use style
-references. Their rights remain unverified and G01 remains a delivery blocker.
+`provenance.json` maps every registered template to the existing image hash and its
+content status. Manga Frame uses the original black-and-white manga reference
+restored from Git on 2026-11-25.
+Templates marked `style-reference` in the provenance catalog have unverified
+rights and remain blocked for delivery under G01.
 The older programmatic captures retain their previous review status.
 The ticket-stub thumbnail captures the current 480 × 270 Browser Source in
 Electron using the project's synthetic stage artwork, composited on a dark
@@ -47,6 +45,14 @@ No image is automatically approved by filename, successful decoding or a hash.
 On 2026-10-24, the user supplied `kqtoc.jpg` for `receipt-setlist` and
 `apple-music-rebrand-icon.jpg` for `cover-player`. Both retain their original
 bytes; the receipt reference is 4:3 and uses the Gallery's existing cover crop.
+
+On 2026-11-25, four user-supplied JPEGs were added as Gallery covers. The
+repository preserves their original bytes and the Gallery applies its usual fit.
+
+- `calculating.jpg` for `textured-credits.jpg`
+- `deco miku.jpg` for `fisheye-lens.jpg`
+- `take your heart.jpg` for `phantom-thieves.jpg`
+- `ado ashura.jpg` for `kinetic-pop.jpg`
 
 Generate inspection captures with `npm run output:audit`. The tool writes fresh
 artifacts under ignored `tasks/output-appearance-audit-*`, never here. It uses

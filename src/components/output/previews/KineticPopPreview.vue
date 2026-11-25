@@ -1,5 +1,11 @@
 <script setup>
-import { computed, onBeforeUnmount, shallowRef, useTemplateRef } from 'vue';
+import {
+  computed,
+  onBeforeUnmount,
+  onMounted,
+  shallowRef,
+  useTemplateRef,
+} from 'vue';
 import gsap from 'gsap';
 import { OUTPUT_LOOK_PRESETS } from '../../../../shared/outputAppearance.mjs';
 import {
@@ -8,15 +14,20 @@ import {
 } from '../../../../shared/browser/kineticPop.mjs';
 import { adaptKineticPopLyricsPresentation } from '../../../../shared/presentation/lyricsPresentation.mjs';
 import { useOutputPreviewMotion } from '../../../composables/output/useOutputPreviewMotion.js';
+import { OUTPUT_LYRICS_CAPTURE_SIZE } from '../../../constants/outputCaptureSizes.js';
 
 const props = defineProps({
   scene: { type: Object, default: () => ({}) },
   animated: { type: Boolean, default: false },
 });
 
+const canvasContent = useTemplateRef('canvasContent');
 const stage = useTemplateRef('stage');
 const current = useTemplateRef('current');
 const painted = shallowRef(false);
+const canvasWidth = shallowRef(0);
+const hasCanvasWidth = computed(() => canvasWidth.value > 0);
+let resizeObserver;
 const arrangement = computed(
   () => props.scene.lyrics?.kinetic?.arrangement ?? 'straight',
 );
@@ -28,11 +39,15 @@ const presentation = computed(
       phraseIndex: 0,
     }),
 );
-const paletteStyle = computed(() => {
+const stageStyle = computed(() => {
+  const style = {
+    '--kinetic-rem': `${(canvasWidth.value / OUTPUT_LYRICS_CAPTURE_SIZE.width) * 16}px`,
+  };
   const { paletteId, lookAmount } = props.scene.appearance ?? {};
   if (!(lookAmount > 0) || !Object.hasOwn(OUTPUT_LOOK_PRESETS, paletteId))
-    return undefined;
+    return style;
   return {
+    ...style,
     '--ovl-look-amount': `${lookAmount}%`,
     ...Object.fromEntries(
       Object.entries(OUTPUT_LOOK_PRESETS[paletteId].colors ?? {})
@@ -42,6 +57,14 @@ const paletteStyle = computed(() => {
   };
 });
 const SAMPLE_DURATION_MS = 3200;
+
+onMounted(() => {
+  // Passing a concrete length avoids Chromium resolving cqi through the glyph layers.
+  resizeObserver = new ResizeObserver(([entry]) => {
+    canvasWidth.value = entry.contentRect.width;
+  });
+  resizeObserver.observe(canvasContent.value);
+});
 
 function elements() {
   return { root: stage.value, current: current.value };
@@ -67,8 +90,8 @@ function paint(kineticPop, kineticPopClock, positionAt) {
 }
 
 useOutputPreviewMotion({
-  scene: () => props.scene,
-  animated: () => props.animated,
+  scene: () => (hasCanvasWidth.value ? props.scene : null),
+  animated: () => props.animated && hasCanvasWidth.value,
   start() {
     const { sourceText, material, phrases, phraseBreakProgresses } =
       presentation.value;
@@ -104,14 +127,20 @@ useOutputPreviewMotion({
     replay();
     return () => clearTimeout(timer);
   },
-  stop: () => paint(presentation.value),
+  renderStatic() {
+    if (hasCanvasWidth.value) paint(presentation.value);
+  },
 });
 
-onBeforeUnmount(() => clearKineticPopPresentation(elements()));
+onBeforeUnmount(() => {
+  resizeObserver?.disconnect();
+  clearKineticPopPresentation(elements());
+});
 </script>
 
 <template>
   <div
+    ref="canvasContent"
     class="obs-template-mockup__content obs-template-mockup__content--lyrics"
   >
     <span
@@ -121,7 +150,7 @@ onBeforeUnmount(() => clearKineticPopPresentation(elements()));
       :data-ovl-scale="scene.appearance?.fontScale"
       :lang="scene.frame?.language || 'und'"
       :data-ovl-kinetic-arrangement="arrangement"
-      :style="paletteStyle"
+      :style="stageStyle"
     >
       <span v-if="!painted" data-kinetic-current>
         <span

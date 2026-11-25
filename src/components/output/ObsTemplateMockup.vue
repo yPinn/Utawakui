@@ -1,5 +1,5 @@
 <script setup>
-import { computed, toRaw } from 'vue';
+import { computed, defineAsyncComponent, toRaw } from 'vue';
 import {
   normalizeOutputAppearance,
   normalizeOutputElementAppearance,
@@ -16,6 +16,7 @@ import { outputTemplatePreviewFor } from './previews/outputTemplatePreviews.js';
 
 const props = defineProps({
   preset: { type: Object, default: null },
+  templatePreview: { type: Object, default: null },
   scene: { type: Object, default: () => ({}) },
   settings: { type: Object, default: null },
   size: {
@@ -31,7 +32,11 @@ const props = defineProps({
   },
 });
 
-const previewComponent = computed(() => outputTemplatePreviewFor(props.preset));
+const previewComponent = computed(
+  () =>
+    props.templatePreview ??
+    defineAsyncComponent(outputTemplatePreviewFor(props.preset)),
+);
 const effectiveSettings = computed(
   () =>
     props.settings ??
@@ -148,6 +153,6 @@ const canvasStyle = computed(() => {
   </div>
 </template>
 
-<!-- Shared canvas rules load first through the preview registry. -->
+<style src="./ObsTemplateMockup.base.css"></style>
 <style src="./hangulFonts.css"></style>
 <style src="./ObsTemplateMockup.reduced-motion.css"></style>

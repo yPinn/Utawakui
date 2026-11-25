@@ -3,25 +3,24 @@ import {
   buildOutputTemplateThumbnailRegistry,
   getOutputTemplateThumbnail,
 } from './outputTemplateThumbnails.js';
-import { OUTPUT_TEMPLATES } from '../constants/outputTemplates.js';
+import templateValues from '../../shared/outputTemplateValues.json';
 import provenance from '../assets/output-template-thumbnails/provenance.json';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 
 describe('bundled output template thumbnails', () => {
-  it('requires one traceable content record per active template without blessing filename-only matches', () => {
+  const templateIds = Object.keys(templateValues.templateKinds);
+
+  it('requires a traceable content record for every template, including development templates', () => {
     expect(Object.keys(provenance.templates).sort()).toEqual(
-      OUTPUT_TEMPLATES.map((p) => p.id).sort(),
+      [...templateIds].sort(),
     );
     const blocked = [];
-    for (const preset of OUTPUT_TEMPLATES) {
-      const record = provenance.templates[preset.id];
-      const extension = ['ribbon-setlist', 'phantom-thieves'].includes(
-        preset.id,
-      )
-        ? 'png'
-        : 'jpg';
-      expect(record.file).toBe(`${preset.id}.${extension}`);
+    for (const templateId of templateIds) {
+      const record = provenance.templates[templateId];
+      expect(record.file).toMatch(
+        new RegExp(`^${templateId}\\.(avif|webp|png|jpe?g)$`, 'u'),
+      );
       const bytes = readFileSync(
         new URL(
           `../assets/output-template-thumbnails/${record.file}`,
@@ -33,34 +32,17 @@ describe('bundled output template thumbnails', () => {
       );
       expect(record.humanReview).toBe('not-tested');
       if (record.content === 'style-reference') {
-        blocked.push(preset.id);
+        blocked.push(templateId);
         expect(record.delivery).toBe('blocked-G01');
         expect(record.rights).toBe('unverified');
-      } else if (preset.id === 'manga-frame') {
-        expect(record.content).toBe('current-programmatic-render');
-        expect(record.delivery).toBe('pending-user-visual-acceptance');
-        expect(record.rights).toBe(
-          'project-owned-runtime-and-synthetic-lyrics',
-        );
-        expect(record.origin).toContain('1280 × 720');
       } else if (
-        [
-          'receipt-setlist',
-          'cover-player',
-          'ticket-stub',
-          'chalkboard-vertical',
-          'centered-vertical',
-          'fisheye-lens',
-        ].includes(preset.id)
+        ['ticket-stub', 'chalkboard-vertical', 'centered-vertical'].includes(
+          templateId,
+        )
       ) {
         expect(record.content).toBe('current-runtime-capture');
         expect(record.delivery).toBe('pending-user-visual-acceptance');
-        expect(record.rights).toBe(
-          {
-            'receipt-setlist': 'project-owned-runtime-and-generated-paper',
-            'fisheye-lens': 'project-owned-runtime-and-synthetic-lyrics',
-          }[preset.id] ?? 'project-owned-synthetic-artwork',
-        );
+        expect(record.rights).toBe('project-owned-synthetic-artwork');
         expect(record.origin).toBeTruthy();
       } else {
         expect(record.content).toBe('legacy-programmatic-capture');
@@ -70,17 +52,23 @@ describe('bundled output template thumbnails', () => {
     expect(blocked.sort()).toEqual([
       'art-card',
       'cover-player',
+      'fisheye-lens',
       'karaoke-stack',
+      'kinetic-pop',
       'live-stage',
+      'manga-frame',
       'phantom-thieves',
       'receipt-setlist',
       'ribbon-setlist',
+      'textured-credits',
     ]);
     expect(provenance.generation.overwriteBundledAssets).toBe(false);
   });
   it('supplies a static asset for every registered template', () => {
-    for (const preset of OUTPUT_TEMPLATES) {
-      expect(getOutputTemplateThumbnail(preset.id), preset.id).toBeTruthy();
+    for (const templateId of templateIds) {
+      expect(getOutputTemplateThumbnail(templateId), templateId).toContain(
+        `/${provenance.templates[templateId].file}`,
+      );
     }
   });
   it('keys Vite asset URLs by the existing template id filename', () => {

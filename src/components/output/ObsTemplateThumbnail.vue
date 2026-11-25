@@ -1,11 +1,7 @@
 <script setup>
-import { computed, defineAsyncComponent, shallowRef } from 'vue';
+import { computed, shallowRef } from 'vue';
 import { getOutputTemplateThumbnail } from '../../utils/outputTemplateThumbnails.js';
 import { t } from '../../utils/i18n.js';
-
-const ObsTemplateMockup = defineAsyncComponent(
-  () => import('./ObsTemplateMockup.vue'),
-);
 
 const props = defineProps({
   preset: { type: Object, default: null },
@@ -48,12 +44,6 @@ function markThumbnailFailed() {
       draggable="false"
       @error="markThumbnailFailed"
     />
-    <ObsTemplateMockup
-      v-else-if="preset?.id === 'textured-credits'"
-      :preset="preset"
-      size="thumbnail"
-      class="obs-template-thumbnail__mockup"
-    />
     <span v-else class="obs-template-thumbnail__unavailable">{{
       t('outputPanel.gallery.noThumbnail')
     }}</span>
@@ -93,10 +83,5 @@ function markThumbnailFailed() {
 
 .obs-template-thumbnail--contain {
   object-fit: contain;
-}
-
-.obs-template-thumbnail__mockup {
-  --obs-template-preview-frame-border-width: 0px;
-  --obs-template-preview-frame-radius: 0;
 }
 </style>
