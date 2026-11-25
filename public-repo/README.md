@@ -10,7 +10,7 @@
 
 - **曲庫**：整理電腦裡的歌曲、歌詞與封面。
 - **演唱工具**：安排歌單、練唱，演出時切歌、看歌詞。
-- **畫面輸出**：把目前曲目、歌詞與歌單放進 OBS 畫面。
+- **畫面輸出**：透過直播軟體的瀏覽器來源，顯示目前曲目、歌詞與已唱曲目。
 
 ### 下載
 
@@ -26,7 +26,7 @@
 
 ### 授權
 
-可免費用於個人、創作與營利直播或錄影；不得重新散布、轉售、修改或冒充官方版本。完整條款見 [LICENSE](LICENSE.md)。
+可免費用於個人使用、內容創作、營利直播與錄影。使用範圍、散布限制與法定權利見[軟體授權](LICENSE.md)。
 
 ### 社群與安全
 
@@ -38,7 +38,7 @@
 
 - **Library**: Organize the songs, lyrics, and artwork on your computer.
 - **Performance**: Plan setlists, practice, and switch songs and follow lyrics while you perform.
-- **Output**: Show the current song, lyrics, and setlist in your OBS scene.
+- **Output**: Show the current song, lyrics, and a list of songs you’ve already performed through a browser source in your streaming software.
 
 ### Download
 
@@ -54,7 +54,7 @@ Use songs, lyrics, and artwork you are authorized to use. Utawakui does not incl
 
 ### License
 
-Free for personal use, content creation, and monetized streams or recordings. Do not redistribute, resell, modify, or present it as an official release. See the full [LICENSE](LICENSE.md).
+Free for personal use, content creation, and monetized streams and recordings. See the [software license](LICENSE.md) for permissions, distribution restrictions, and statutory rights.
 
 ### Community and Security
 

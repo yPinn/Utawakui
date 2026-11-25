@@ -30,6 +30,21 @@ describe('Utawakui license policy', () => {
     expect(license).toContain('does not grant rights to songs');
   });
 
+  it('preserves statutory and independent third-party rights in both languages', () => {
+    const [chinese, english] = readText('LICENSE.md').split(/\r?\n---\r?\n/u);
+
+    expect(chinese).toContain('適用法律允許且無須另行取得權利人同意');
+    expect(chinese).toContain('故意或重大過失責任及消費者保護責任');
+    expect(chinese).toContain('這些條款授予的權利不受本授權限制');
+    expect(english).toContain(
+      'applicable law permits without further permission',
+    );
+    expect(english).toContain('intentional misconduct or gross negligence');
+    expect(english).toContain(
+      'does not restrict rights granted under those licenses',
+    );
+  });
+
   it('packages both the product license and third-party notices', () => {
     const builderConfig = yaml.load(readText('electron-builder.yml'));
 
