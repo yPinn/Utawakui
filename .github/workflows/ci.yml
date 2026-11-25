@@ -137,7 +137,8 @@ jobs:
         shell: bash
         run: |
           requests_version=$(node -p "require('./shared/featureDependencies.json').dependencies.find(d => d.id === 'yt-dlp-provider-tool').artifacts.find(a => a.role === 'requests-wheel').version")
-          python -m pip install --only-binary=:all: "requests==$requests_version"
+          # NumPy backs the offline media-alignment research probe tests.
+          python -m pip install --only-binary=:all: "requests==$requests_version" "numpy==2.5.1"
           git ls-files -z -- '*test.py' | while IFS= read -r -d '' test_file; do
             printf '\nRunning %s\n' "$test_file"
             python -B "$test_file"
