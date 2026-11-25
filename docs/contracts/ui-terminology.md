@@ -52,7 +52,7 @@ Output 字型選單採用「模板字型」（Template fonts）指模板提供�
 模板庫以「收藏模板」（Favorite template）和「取消收藏」（Remove from favorites）管理個人偏好。收藏置於「已收藏」（Favorites）區，其餘選項列在「其他模板」（Other templates）。
 Output 工作臺的「模板」（Templates）分頁提供底片清單，可直接切換目前輸出類別使用的模板。
 「模板設定分頁」（Template settings tabs）是工作臺與手機遙控中調整模板的分頁列名稱。
-工作臺欄位名稱以繁中四字內為原則。「字幕呈現」（Subtitle display）的「呈現策略」（Presentation policy）選擇字幕精簡或保留原文的方式。「定時回顧」（Timed review）切換票據歌單的歷史頁回顧。「透明度」（Opacity）用於背景的透明、半透明與實底選項。
+工作臺欄位名稱以繁中四字內為原則。「字幕呈現」（Subtitle display）的「呈現策略」（Presentation policy）選擇字幕精簡或保留原文的方式。「定時回顧」（Timed review）切換票據歌單的歷史頁回顧。「透明度」（Opacity）用於其他輸出的透明、半透明與實底選項。歌單的「背景樣式」（Background style）提供「透明」（Transparent）、「純色」（Solid color）及「模板底色」（Template background）。純色用「背景色」（Background color）選色，以「透明度」（Transparency）表示底圖透出的百分比。
 歌詞輸出的「翻譯」（Translation）分頁用「顯示譯文」（Show translation）選擇畫面輸出的譯文，用「譯文字級」（Translation size）調整字幕大小。
 
 「人物組合」（Portrait preset）是幻影怪盜中一組可切換的照片、顯示名稱與底色。

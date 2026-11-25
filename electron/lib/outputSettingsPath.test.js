@@ -241,7 +241,10 @@ describe('Output settings path', () => {
           FISHEYE_FIELDS.has(field.key) ||
           PHANTOM_FIELDS.has(field.key) ||
           MANGA_FIELDS.has(field.key) ||
-          field.key === 'ornateColumnMode'
+          field.key === 'ornateColumnMode' ||
+          // Colour and transparency combine into one --ovl-setlist-background value.
+          field.key === 'setlistBackgroundColor' ||
+          field.key === 'setlistBackgroundTransparency'
         ) {
           expect(
             normalizeOutputAppearance(slot.settings, { templateId })[field.key],

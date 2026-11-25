@@ -27,6 +27,9 @@ describe('companion Output inspector contract', () => {
     ['fisheye-lens', 'filmGrainAmount', 50],
     ['live-stage', 'lyricsPresentationPolicyId', 'balanced'],
     ['cover-player', 'element.title.fontWeight', 'bold'],
+    ['receipt-setlist', 'surface', 'custom'],
+    ['ribbon-setlist', 'setlistBackgroundColor', '#84bca2'],
+    ['queue-board', 'setlistBackgroundTransparency', 37],
   ])('admits supported settings for %s', (templateId, fieldKey, value) => {
     const intent = { templateId, fieldKey, value };
     expect(parseCompanionOutputChange(intent)).toEqual(intent);
@@ -47,6 +50,28 @@ describe('companion Output inspector contract', () => {
         value: 'bold',
       }),
     ).toBeNull();
+  });
+
+  it('activates solid color settings only with the custom Setlist background', () => {
+    const templateId = 'queue-board';
+    const intent = {
+      templateId,
+      fieldKey: 'setlistBackgroundTransparency',
+      value: 37,
+    };
+    expect(
+      companionOutputSettingsPatch(
+        projectCompanionOutputSlot({ templateId }),
+        intent,
+      ),
+    ).toBeNull();
+    const current = projectCompanionOutputSlot({
+      templateId,
+      settings: { surface: 'custom' },
+    });
+    expect(companionOutputSettingsPatch(current, intent)).toEqual({
+      setlistBackgroundTransparency: 37,
+    });
   });
 
   it('sets only an existing portrait and resets appearance without deleting assets', () => {

@@ -1,7 +1,10 @@
 import { renderToString } from '@vue/server-renderer';
 import { createSSRApp, h } from 'vue';
 import { describe, expect, it, vi } from 'vitest';
-import { outputAppearanceFieldsForTemplate } from '../../../shared/outputAppearance.mjs';
+import {
+  isOutputAppearanceFieldVisible,
+  outputAppearanceFieldsForTemplate,
+} from '../../../shared/outputAppearance.mjs';
 import { localizeAppearanceField } from '../../utils/outputPanelCopy.js';
 import { getOutputWorkbenchData } from '../../constants/outputTemplates.js';
 import {
@@ -21,7 +24,7 @@ const fieldsFor = (templateId) =>
 
 const templateTabLabels = {
   'phantom-thieves': ['版面', '人物', '文字', '外觀'],
-  'queue-board': ['版面', '文字', '外觀'],
+  'queue-board': ['版面', '文字', '外觀', '修飾'],
   'karaoke-stack': ['文字', '外觀'],
   'kinetic-pop': ['文字', '外觀'],
   'ornate-vertical': ['版面', '動態', '修飾', '文字', '外觀'],
@@ -33,8 +36,8 @@ const templateTabLabels = {
   'art-card': ['外觀', '文字'],
   'ticket-stub': ['文字', '外觀'],
   'cover-player': ['外觀', '文字'],
-  'receipt-setlist': ['動態', '文字', '外觀'],
-  'ribbon-setlist': ['動態', '外觀'],
+  'receipt-setlist': ['動態', '文字', '外觀', '修飾'],
+  'ribbon-setlist': ['動態', '外觀', '修飾'],
 };
 const workbenchTabOrder = [
   '顯示',
@@ -324,7 +327,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
   });
 
   it.each(getOutputWorkbenchData().templates)(
-    'uses only the supported folder tabs and renders every field for $id',
+    'uses only the supported folder tabs and renders fields available by default for $id',
     async ({ id, kind, appearanceFields, presentationFields }) => {
       const html = await renderRegisteredTemplate(id);
       const availableLabels = [
@@ -347,28 +350,33 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
         ),
       );
       expect(html).not.toContain('data-output-side-toggle');
-      for (const { groups } of outputInspectorTabs([
+      for (const { id: tabId, groups } of outputInspectorTabs([
         ...appearanceFields,
         ...presentationFields,
       ])) {
+        if (id === 'queue-board' && tabId === 'layout') {
+          expect(
+            groups.flatMap(({ fields }) => fields.map(({ key }) => key)),
+          ).toEqual(['spacingDensity']);
+          continue;
+        }
         expect(groups.flatMap(({ fields }) => fields).length).toBeGreaterThan(
           1,
         );
       }
-      for (const { key, group } of [
-        ...appearanceFields,
-        ...presentationFields,
-      ]) {
+      const appearanceDefaults = {
+        ...getOutputWorkbenchData().slotDefaults[kind]?.settings,
+        ...Object.fromEntries(
+          appearanceFields.map(({ key, defaultValue }) => [key, defaultValue]),
+        ),
+      };
+      for (const field of [...appearanceFields, ...presentationFields]) {
         if (
-          group === 'portrait' ||
-          [
-            'phantomChatShape',
-            'phantomCardStyle',
-            'phantomRansomFont',
-          ].includes(key)
+          field.group === 'portrait' ||
+          !isOutputAppearanceFieldVisible(field, appearanceDefaults)
         )
           continue;
-        expect(html).toContain(`output-appearance-${key}`);
+        expect(html).toContain(`output-appearance-${field.key}`);
       }
     },
   );
@@ -526,16 +534,26 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
       ]),
     ).toEqual([
       ['動態', ['receiptReview', 'receiptReviewInterval', 'receiptDirection']],
+      [
+        '修飾',
+        ['surface', 'setlistBackgroundColor', 'setlistBackgroundTransparency'],
+      ],
       ['文字', ['fontFamily', 'fontScale', 'fontScaleAdjustment']],
       ['外觀', ['paletteId', 'lookAmount', 'filmGrainAmount', 'filmGrainSize']],
     ]);
 
-    const html = await renderRegisteredTemplate('receipt-setlist');
+    const html = await renderRegisteredTemplate(
+      'receipt-setlist',
+      {},
+      {
+        surface: 'custom',
+      },
+    );
     expect(
       [...html.matchAll(/role="tab" aria-label="([^"]+)"/gu)].map(
         ([, label]) => label,
       ),
-    ).toEqual(['文字', '外觀', '動態']);
+    ).toEqual(['文字', '外觀', '修飾', '動態']);
     expect(html).toContain('>字體設定</h3>');
     expect(html).toContain('>歷史回顧</h3>');
     expect(html).not.toContain('data-output-side-toggle');
@@ -546,7 +564,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
       outputInspectorTabs(fields.filter(({ group }) => group !== 'motion')).map(
         ({ id }) => id,
       ),
-    ).toEqual(['layout', 'text', 'color']);
+    ).toEqual(['layout', 'decoration', 'text', 'color']);
   });
 
   it('uses the same motion controls for the Ribbon and Receipt Setlists', async () => {
@@ -570,6 +588,38 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     expect(html).not.toContain('OBS 輸出工作台');
     expect(html).not.toContain('OBS 擷取建議');
   });
+
+  it.each(['receipt-setlist', 'queue-board', 'ribbon-setlist'])(
+    'keeps %s background in Styling and reveals solid color controls on selection',
+    async (templateId) => {
+      const transparent = await renderRegisteredTemplate(
+        templateId,
+        {},
+        {
+          surface: 'transparent',
+        },
+      );
+      expect(transparent).toContain('aria-label="修飾"');
+      expect(transparent).toContain('背景樣式');
+      expect(transparent).toContain('純色');
+      expect(transparent).not.toContain('output-appearance-setlistBackground');
+
+      const solid = await renderRegisteredTemplate(
+        templateId,
+        {},
+        {
+          surface: 'custom',
+          setlistBackgroundTransparency: 37,
+        },
+      );
+      expect(solid).toContain('aria-label="修飾"');
+      expect(solid).toContain('output-appearance-setlistBackgroundColor');
+      expect(solid).toContain(
+        'output-appearance-setlistBackgroundTransparency',
+      );
+      expect(solid).toContain('37%');
+    },
+  );
 
   it.each([
     [

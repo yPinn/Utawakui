@@ -1,6 +1,7 @@
 import {
   normalizeOutputAppearance,
   OUTPUT_APPEARANCE_DEFAULTS,
+  outputSetlistBackgroundColor,
 } from '../../shared/outputAppearance.mjs';
 import { overlayText } from '../shared/messages.mjs';
 import { createRibbonFlashback, ribbonBezierEase } from './ribbonFlashback.mjs';
@@ -468,9 +469,15 @@ export function createRibbonView(host, { gsap, reviewInterval } = {}) {
 
   return {
     configure(settings) {
-      const { surface, receiptReview, receiptReviewInterval } =
-        normalizeOutputAppearance(settings, { templateId: 'ribbon-setlist' });
+      const appearance = normalizeOutputAppearance(settings, {
+        templateId: 'ribbon-setlist',
+      });
+      const { surface, receiptReview, receiptReviewInterval } = appearance;
       root.dataset.surface = surface;
+      root.style.setProperty(
+        '--ovl-setlist-background',
+        outputSetlistBackgroundColor(appearance) ?? '',
+      );
       if (review === receiptReview && reviewSeconds === receiptReviewInterval)
         return;
       review = receiptReview;

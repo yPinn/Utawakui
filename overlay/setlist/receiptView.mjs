@@ -1,6 +1,10 @@
 import { createReceiptMotionController } from './receiptMotion.mjs';
 import { createSetlistCurrentMotionController } from './setlistMotion.mjs';
-import { outputFontScaleRatio } from '../../shared/outputAppearance.mjs';
+import {
+  normalizeOutputAppearance,
+  outputFontScaleRatio,
+  outputSetlistBackgroundColor,
+} from '../../shared/outputAppearance.mjs';
 import { receiptPageLayout } from '../../shared/presentation/receiptSetlist.mjs';
 import { overlayText } from '../shared/messages.mjs';
 
@@ -134,7 +138,15 @@ export function createReceiptView(host, { gsap = null } = {}) {
   observer?.observe(history);
   return {
     update,
-    configure(appearance) {
+    configure(settings) {
+      const appearance = normalizeOutputAppearance(settings, {
+        templateId: 'receipt-setlist',
+      });
+      root.dataset.surface = appearance.surface;
+      root.style.setProperty(
+        '--ovl-setlist-background',
+        outputSetlistBackgroundColor(appearance) ?? '',
+      );
       const nextScale = outputFontScaleRatio(appearance);
       const scaleChanged = nextScale !== scale;
       const nextDirection =

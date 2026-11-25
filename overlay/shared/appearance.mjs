@@ -11,6 +11,7 @@ import {
   outputDefaultFontId,
   outputElementFontWeight,
   outputFontScaleRatio,
+  outputSetlistBackgroundColor,
   outputHangulFontCssValue,
   outputLocalFontCssValue,
   sanitizeOutputTranslationFontScale,
@@ -334,6 +335,13 @@ export function applyOverlayAppearance(document, slot) {
   root.dataset.ovlWeight = appearance.fontWeight;
   root.dataset.ovlAlign = appearance.alignment;
   root.dataset.ovlSurface = appearance.surface;
+  setOrRemoveProperty(
+    root,
+    '--ovl-setlist-background',
+    templateId === 'queue-board'
+      ? outputSetlistBackgroundColor(appearance)
+      : undefined,
+  );
   if (templateId === 'art-card')
     root.dataset.vinylSurfaceLight = appearance.vinylSurfaceLight;
   else delete root.dataset.vinylSurfaceLight;

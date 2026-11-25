@@ -4,7 +4,7 @@ import {
   MANGA_BUBBLE_STYLE_IDS,
 } from './presentation/mangaFrameContract.mjs';
 
-export const OUTPUT_APPEARANCE_SCHEMA_VERSION = 21;
+export const OUTPUT_APPEARANCE_SCHEMA_VERSION = 22;
 
 export const OUTPUT_TRANSLATION_FONT_SCALE = Object.freeze({
   min: 75,
@@ -638,7 +638,34 @@ const FIELD_DEFINITIONS = [
     order: 10,
     control: 'select',
     defaultValue: 'transparent',
-    options: [{ id: 'transparent' }, { id: 'soft' }, { id: 'solid' }],
+    options: [
+      { id: 'transparent' },
+      { id: 'custom' },
+      { id: 'soft' },
+      { id: 'solid' },
+    ],
+  }),
+  fieldDefinition('surface', {
+    key: 'setlistBackgroundColor',
+    family: 'fill',
+    tier: 'basic',
+    reflow: false,
+    order: 20,
+    control: 'color',
+    defaultValue: '#fffdfa',
+  }),
+  fieldDefinition('surface', {
+    key: 'setlistBackgroundTransparency',
+    family: 'fill',
+    tier: 'basic',
+    reflow: false,
+    order: 30,
+    control: 'range',
+    defaultValue: 0,
+    min: 0,
+    max: 100,
+    step: 1,
+    unit: '%',
   }),
   fieldDefinition('decoration', {
     key: 'vinylSurfaceLight',
@@ -1103,8 +1130,17 @@ const SETLIST_FIELD_DEFAULTS = Object.freeze({
   fontScale: { defaultValue: 'medium' },
   fontWeight: { defaultValue: 'semibold' },
   alignment: { defaultValue: 'left' },
-  surface: { defaultValue: 'solid' },
+  surface: {
+    defaultValue: 'solid',
+    optionIds: ['transparent', 'custom', 'solid'],
+    copyKey: 'setlistSurface',
+  },
 });
+const SETLIST_BACKGROUND_KEYS = [
+  'surface',
+  'setlistBackgroundColor',
+  'setlistBackgroundTransparency',
+];
 const LYRICS_FIELD_DEFAULTS = Object.freeze({
   fontFamily: { defaultValue: 'serif' },
   fontScale: { defaultValue: 'medium' },
@@ -1118,20 +1154,27 @@ const TEMPLATE_OVERRIDES = {
     keys: [
       'fontFamily',
       'fontScale',
+      ...SETLIST_BACKGROUND_KEYS,
       'receiptDirection',
       'receiptReview',
       'receiptReviewInterval',
     ],
     fields: {
+      ...SETLIST_FIELD_DEFAULTS,
       fontFamily: { defaultValue: 'template', optionIds: ['template'] },
       fontScale: { defaultValue: 'medium' },
     },
   },
   'ribbon-setlist': {
-    keys: ['fontFamily', 'surface', 'receiptReview', 'receiptReviewInterval'],
+    keys: [
+      'fontFamily',
+      ...SETLIST_BACKGROUND_KEYS,
+      'receiptReview',
+      'receiptReviewInterval',
+    ],
     fields: {
+      ...SETLIST_FIELD_DEFAULTS,
       fontFamily: { defaultValue: 'template', optionIds: ['template'] },
-      surface: { defaultValue: 'solid', optionIds: ['solid', 'transparent'] },
     },
   },
   'art-card': {
@@ -1151,10 +1194,17 @@ const TEMPLATE_OVERRIDES = {
       'fontFamily',
       'fontScale',
       'fontWeight',
-      'surface',
+      ...SETLIST_BACKGROUND_KEYS,
       'spacingDensity',
     ],
-    fields: SETLIST_FIELD_DEFAULTS,
+    fields: {
+      ...SETLIST_FIELD_DEFAULTS,
+      surface: {
+        ...SETLIST_FIELD_DEFAULTS.surface,
+        optionIds: ['transparent', 'custom', 'soft', 'solid'],
+      },
+      setlistBackgroundColor: { defaultValue: '#111417' },
+    },
   },
   'focus-line': {
     keys: BASIC_APPEARANCE_KEYS.filter((key) => !LOOK_KEYS.includes(key)),
@@ -1655,6 +1705,15 @@ export function sanitizeOutputAppearanceSetting(key, value, options = {}) {
   const baseField = FIELD_MAP.get(key);
   if (!baseField) return undefined;
   if (
+    options.templateId &&
+    ((key === 'surface' && value === 'custom') ||
+      key === 'setlistBackgroundColor' ||
+      key === 'setlistBackgroundTransparency') &&
+    !templateConfig(options.templateId).keys.includes('setlistBackgroundColor')
+  ) {
+    return undefined;
+  }
+  if (
     (baseField.family === 'asset' || baseField.group === 'portrait') &&
     options.templateId &&
     !templateConfig(options.templateId).keys.includes(key)
@@ -1724,6 +1783,12 @@ export function outputAppearanceFieldsForTemplate(templateId) {
   return config.keys.map((key) => {
     const field = FIELD_MAP.get(key);
     const templateOverride = config.fields?.[key] ?? {};
+    if (key === 'surface' && !templateOverride.optionIds) {
+      return cloneField(field, {
+        ...templateOverride,
+        optionIds: ['transparent', 'soft', 'solid'],
+      });
+    }
     if (key !== 'fontFamily') return cloneField(field, templateOverride);
     const optionIds = [
       ...(templateOverride.optionIds ?? []),
@@ -1740,13 +1805,22 @@ export function outputAppearanceFieldsForTemplate(templateId) {
 }
 
 export function isOutputAppearanceFieldVisible({ group, key }, settings) {
-  const { phantomMode } = settings;
+  const { phantomMode, surface } = settings;
   return (
+    ((key !== 'setlistBackgroundColor' &&
+      key !== 'setlistBackgroundTransparency') ||
+      surface === 'custom') &&
     (group !== 'portrait' || phantomMode === 'side-card') &&
     (key !== 'phantomChatShape' || phantomMode === 'chat') &&
     (key !== 'phantomCardStyle' || phantomMode === 'side-card') &&
     (key !== 'phantomRansomFont' || phantomMode === 'ransom')
   );
+}
+
+export function outputSetlistBackgroundColor(appearance) {
+  if (appearance.surface !== 'custom') return undefined;
+  const { setlistBackgroundColor, setlistBackgroundTransparency } = appearance;
+  return `color-mix(in srgb, ${setlistBackgroundColor} ${100 - setlistBackgroundTransparency}%, transparent)`;
 }
 
 function sameSettingValue(left, right) {

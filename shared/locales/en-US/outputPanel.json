@@ -671,10 +671,22 @@
         "label": "Opacity",
         "options": {
           "transparent": "Transparent",
+          "custom": "Solid color",
           "soft": "Translucent",
           "solid": "Solid"
         }
       },
+      "setlistSurface": {
+        "label": "Background style",
+        "options": {
+          "transparent": "Transparent",
+          "custom": "Solid color",
+          "soft": "Translucent",
+          "solid": "Template background"
+        }
+      },
+      "setlistBackgroundColor": { "label": "Background color" },
+      "setlistBackgroundTransparency": { "label": "Transparency" },
       "furigana": {
         "label": "Furigana",
         "options": {

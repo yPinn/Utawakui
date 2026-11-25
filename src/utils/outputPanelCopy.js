@@ -21,7 +21,7 @@ export function localizeAppearanceField(field) {
   }
   const base = field.propertyKey
     ? `outputPanel.appearance.elementFields.${field.propertyKey}`
-    : `outputPanel.appearance.fields.${field.key}`;
+    : `outputPanel.appearance.fields.${field.copyKey ?? field.key}`;
   const unitKey = `${base}.unit`;
   const placeholderKey = `${base}.placeholder`;
   let groupKey = `outputPanel.appearance.groups.${catalogKey(field.group)}`;

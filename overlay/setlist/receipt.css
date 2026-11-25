@@ -51,6 +51,16 @@
   mask-size: 100% 100%;
   mask-repeat: no-repeat;
 }
+.receipt-setlist[data-surface='transparent'] .receipt-setlist__paper {
+  display: none;
+}
+.receipt-setlist[data-surface='custom'] .receipt-setlist__paper {
+  background: var(--ovl-setlist-background);
+  mask: url('./receipt-paper.png') center / 100% 100% no-repeat;
+}
+.receipt-setlist[data-surface='custom'] .receipt-setlist__paper::after {
+  content: none;
+}
 .receipt-setlist[data-direction='up'] .receipt-setlist__paper {
   transform: rotate(180deg) scaleX(1.1);
 }

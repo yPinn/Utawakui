@@ -117,6 +117,33 @@ describe('overlay appearance', () => {
     expect(removeProperty).toHaveBeenCalledWith('--ovl-translation-font-scale');
   });
 
+  it('applies custom Queue Board alpha and clears the fill when switching back', () => {
+    const setProperty = vi.fn();
+    const removeProperty = vi.fn();
+    const document = {
+      documentElement: { dataset: {}, style: { setProperty, removeProperty } },
+    };
+
+    applyOverlayAppearance(document, {
+      templateId: 'queue-board',
+      settings: {
+        surface: 'custom',
+        setlistBackgroundColor: '#AABBCC',
+        setlistBackgroundTransparency: 35,
+      },
+    });
+    expect(setProperty).toHaveBeenCalledWith(
+      '--ovl-setlist-background',
+      'color-mix(in srgb, #aabbcc 65%, transparent)',
+    );
+    applyOverlayAppearance(document, {
+      templateId: 'queue-board',
+      settings: { surface: 'transparent' },
+    });
+    expect(removeProperty).toHaveBeenCalledWith('--ovl-setlist-background');
+    expect(document.documentElement.dataset.ovlSurface).toBe('transparent');
+  });
+
   it('applies distinct Chalkboard ink and guide colors to Browser Source', () => {
     const setProperty = vi.fn();
     const document = {

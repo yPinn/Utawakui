@@ -498,6 +498,14 @@ function resetFields(fields) {
   emitSettingsChange('immediate');
 }
 
+function resetGroup(group) {
+  resetFields(
+    group.id === 'surface'
+      ? templateFields.value.filter(({ group }) => group === 'surface')
+      : group.fields,
+  );
+}
+
 function resetAppearance() {
   portraitEditor.value = null;
   resetFields(templateLocalFields.value);
@@ -787,7 +795,7 @@ function removePortraitSet() {
         :header-actions="
           group.fields.some(({ editor }) => editor === 'font-family')
         "
-        @reset="resetFields(group.fields)"
+        @reset="resetGroup(group)"
       >
         <template #description>
           <UiHint v-if="group.id === 'template-presentation'">

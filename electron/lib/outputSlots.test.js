@@ -882,6 +882,36 @@ describe('outputSlots', () => {
     });
   });
 
+  it('validates and recalls independently saved Setlist backgrounds', () => {
+    upsertOutputSlot(dir, 'setlist', {
+      templateId: 'receipt-setlist',
+      settings: {
+        surface: 'custom',
+        setlistBackgroundColor: '#ABCDEF',
+        setlistBackgroundTransparency: 32.8,
+      },
+    });
+    upsertOutputSlot(dir, 'setlist', {
+      templateId: 'ribbon-setlist',
+      recallAppearance: true,
+      settings: { surface: 'transparent' },
+    });
+    expect(loadOutputSlots(dir).slots.setlist.settings).toEqual({
+      captureSize: 'large',
+      surface: 'transparent',
+    });
+
+    upsertOutputSlot(dir, 'setlist', {
+      templateId: 'receipt-setlist',
+      recallAppearance: true,
+    });
+    expect(loadOutputSlots(dir).slots.setlist.settings).toMatchObject({
+      surface: 'custom',
+      setlistBackgroundColor: '#abcdef',
+      setlistBackgroundTransparency: 33,
+    });
+  });
+
   it('backs up corrupted documents and refuses newer versions', () => {
     fs.writeFileSync(filePath, '{ invalid json');
     expect(loadOutputSlots(dir).slots.lyrics.templateId).toBe('karaoke-stack');

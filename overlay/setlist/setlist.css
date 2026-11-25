@@ -34,7 +34,7 @@
       var(--ovl-user-widget-padding-inline);
     border: 1px solid var(--ovl-user-outline);
     border-radius: var(--ovl-primitive-radius-md);
-    background: var(--ovl-user-surface);
+    background: var(--ovl-setlist-background, var(--ovl-user-surface));
     font-size: var(--ovl-user-font-scale);
     font-family: var(--ovl-user-font-family);
     text-align: var(--ovl-user-text-align);

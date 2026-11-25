@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "appearanceSchemaVersion": 21,
+  "appearanceSchemaVersion": 22,
   "captureSizes": {
     "small": {
       "width": 480,
@@ -62,6 +62,16 @@
       "activation": "explicit-selection"
     },
     "surface": {
+      "level": "opt",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
+    },
+    "setlistBackgroundColor": {
+      "level": "opt",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
+    },
+    "setlistBackgroundTransparency": {
       "level": "opt",
       "scope": "slot-template",
       "activation": "explicit-selection"
@@ -493,12 +503,44 @@
               "id": "transparent"
             },
             {
+              "id": "custom"
+            },
+            {
               "id": "soft"
             },
             {
               "id": "solid"
             }
           ],
+          "group": "surface",
+          "groupOrder": 50,
+          "copyKey": "setlistSurface"
+        },
+        {
+          "scope": "template",
+          "key": "setlistBackgroundColor",
+          "family": "fill",
+          "tier": "basic",
+          "reflow": false,
+          "order": 20,
+          "control": "color",
+          "defaultValue": "#111417",
+          "group": "surface",
+          "groupOrder": 50
+        },
+        {
+          "scope": "template",
+          "key": "setlistBackgroundTransparency",
+          "family": "fill",
+          "tier": "basic",
+          "reflow": false,
+          "order": 30,
+          "control": "range",
+          "defaultValue": 0,
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": "%",
           "group": "surface",
           "groupOrder": 50
         },
@@ -3567,6 +3609,58 @@
         },
         {
           "scope": "template",
+          "key": "surface",
+          "family": "fill",
+          "tier": "basic",
+          "reflow": false,
+          "order": 10,
+          "control": "select",
+          "defaultValue": "solid",
+          "options": [
+            {
+              "id": "transparent"
+            },
+            {
+              "id": "custom"
+            },
+            {
+              "id": "solid"
+            }
+          ],
+          "group": "surface",
+          "groupOrder": 50,
+          "copyKey": "setlistSurface"
+        },
+        {
+          "scope": "template",
+          "key": "setlistBackgroundColor",
+          "family": "fill",
+          "tier": "basic",
+          "reflow": false,
+          "order": 20,
+          "control": "color",
+          "defaultValue": "#fffdfa",
+          "group": "surface",
+          "groupOrder": 50
+        },
+        {
+          "scope": "template",
+          "key": "setlistBackgroundTransparency",
+          "family": "fill",
+          "tier": "basic",
+          "reflow": false,
+          "order": 30,
+          "control": "range",
+          "defaultValue": 0,
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": "%",
+          "group": "surface",
+          "groupOrder": 50
+        },
+        {
+          "scope": "template",
           "key": "receiptDirection",
           "family": "layout",
           "tier": "basic",
@@ -3814,9 +3908,41 @@
               "id": "transparent"
             },
             {
+              "id": "custom"
+            },
+            {
               "id": "solid"
             }
           ],
+          "group": "surface",
+          "groupOrder": 50,
+          "copyKey": "setlistSurface"
+        },
+        {
+          "scope": "template",
+          "key": "setlistBackgroundColor",
+          "family": "fill",
+          "tier": "basic",
+          "reflow": false,
+          "order": 20,
+          "control": "color",
+          "defaultValue": "#fffdfa",
+          "group": "surface",
+          "groupOrder": 50
+        },
+        {
+          "scope": "template",
+          "key": "setlistBackgroundTransparency",
+          "family": "fill",
+          "tier": "basic",
+          "reflow": false,
+          "order": 30,
+          "control": "range",
+          "defaultValue": 0,
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": "%",
           "group": "surface",
           "groupOrder": 50
         },

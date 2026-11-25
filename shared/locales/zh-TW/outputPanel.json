@@ -667,10 +667,22 @@
         "label": "透明度",
         "options": {
           "transparent": "透明",
+          "custom": "純色",
           "soft": "半透明",
           "solid": "實底"
         }
       },
+      "setlistSurface": {
+        "label": "背景樣式",
+        "options": {
+          "transparent": "透明",
+          "custom": "純色",
+          "soft": "半透明",
+          "solid": "模板底色"
+        }
+      },
+      "setlistBackgroundColor": { "label": "背景色" },
+      "setlistBackgroundTransparency": { "label": "透明度" },
       "furigana": {
         "label": "假名標音",
         "options": {

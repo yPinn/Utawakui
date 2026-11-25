@@ -43,14 +43,21 @@
   clip-path: inset(var(--ribbon-paper-inset));
 }
 
-.ribbon-setlist[data-surface='solid']::before {
+.ribbon-setlist:is([data-surface='solid'], [data-surface='custom'])::before {
   position: absolute;
   z-index: -1;
   inset: var(--ribbon-paper-inset);
+  content: '';
+}
+
+.ribbon-setlist[data-surface='solid']::before {
   background: url('./receipt-grain.png') center / cover;
   opacity: 0.1;
   mix-blend-mode: multiply;
-  content: '';
+}
+
+.ribbon-setlist[data-surface='custom']::before {
+  background: var(--ovl-setlist-background);
 }
 
 .ribbon-setlist__page {

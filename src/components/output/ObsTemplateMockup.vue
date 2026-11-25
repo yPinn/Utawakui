@@ -7,6 +7,7 @@ import {
   outputDefaultFontId,
   outputFontScaleRatio,
   outputHangulFontCssValue,
+  outputSetlistBackgroundColor,
   ornateSectionAccentColor,
 } from '../../../shared/outputAppearance.mjs';
 import { createOutputPreviewScene } from '../../../shared/presentation/outputPreviewScene.mjs';
@@ -95,6 +96,10 @@ const canvasStyle = computed(() => {
     ),
     '--ovl-user-font-scale-ratio': outputFontScaleRatio(appearance.value),
     '--ovl-user-font-fine': appearance.value.fontScaleAdjustment / 100,
+    '--ovl-setlist-background':
+      templateId === 'queue-board'
+        ? outputSetlistBackgroundColor(appearance.value)
+        : undefined,
     '--ovl-el-title-size-scale':
       (elements['element.title.fontSizeScale'] ?? 100) / 100,
     '--ovl-el-artist-size-scale':

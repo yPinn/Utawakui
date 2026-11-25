@@ -143,6 +143,11 @@ function mergeSingleFieldTabs(tabs) {
   for (const [index, tab] of tabs.entries()) {
     const field = singleField(tab);
     if (!field) continue;
+    if (
+      field.key === 'surface' &&
+      field.options.some(({ id }) => id === 'custom')
+    )
+      continue;
     let destination = singleFieldDestinations[field.key];
     if (field.key === 'surface' && isDensityLayout) destination = 'layout';
     if (field.scope === 'element' && field.propertyKey === 'visible')
