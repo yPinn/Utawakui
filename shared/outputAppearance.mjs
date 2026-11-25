@@ -870,6 +870,18 @@ const FIELD_DEFINITIONS = [
     control: 'color',
     defaultValue: '#ffffff',
   }),
+  fieldDefinition('decoration', {
+    key: 'chalkboardRule',
+    family: 'visibility',
+    tier: 'basic',
+    reflow: false,
+    order: 10,
+    control: 'select',
+    editor: 'checkbox',
+    checkedValue: 'shown',
+    defaultValue: 'shown',
+    options: [{ id: 'shown' }, { id: 'hidden' }],
+  }),
   fieldDefinition('custom-color', {
     key: 'chalkboardRuleColor',
     family: 'swatch',
@@ -1288,6 +1300,7 @@ const TEMPLATE_OVERRIDES = {
       'fontFamily',
       'fontScale',
       'textColor',
+      'chalkboardRule',
       'chalkboardRuleColor',
       'positionAnchor',
       'positionOffsetX',
@@ -1805,11 +1818,12 @@ export function outputAppearanceFieldsForTemplate(templateId) {
 }
 
 export function isOutputAppearanceFieldVisible({ group, key }, settings) {
-  const { phantomMode, surface } = settings;
+  const { chalkboardRule, phantomMode, surface } = settings;
   return (
     ((key !== 'setlistBackgroundColor' &&
       key !== 'setlistBackgroundTransparency') ||
       surface === 'custom') &&
+    (key !== 'chalkboardRuleColor' || chalkboardRule !== 'hidden') &&
     (group !== 'portrait' || phantomMode === 'side-card') &&
     (key !== 'phantomChatShape' || phantomMode === 'chat') &&
     (key !== 'phantomCardStyle' || phantomMode === 'side-card') &&

@@ -67,6 +67,7 @@
     --ovl-ornate-text-shadow: var(--ovl-primitive-ornate-text-shadow);
     --ovl-ornate-cast-ink: var(--ovl-primitive-ornate-cast-ink);
     --ovl-ornate-stroke-shadow: var(--ovl-primitive-ornate-stroke-shadow);
+    --ovl-material-chalkboard-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='192' height='192'%3E%3Cfilter id='chalk' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.61 .39' numOctaves='3' seed='19' stitchTiles='stitch'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='table' tableValues='.50 .50 .62 .91 1 1 1'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23chalk)'/%3E%3C/svg%3E");
     --ovl-mark-shadow: var(--ovl-primitive-mark-shadow);
     --ovl-panel-shadow: var(--ovl-primitive-panel-shadow);
     --ovl-motion-line-duration: var(--ovl-primitive-motion-standard);

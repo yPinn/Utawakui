@@ -110,7 +110,7 @@
 | `karaoke-stack` 經典字幕       | 配色與強度、字級                                                                                            |
 | `kinetic-pop` 躍動字幕         | 配色與強度、字級、文字材質、文字排列                                                                        |
 | `ornate-vertical` 和風直書     | 配色與強度、正文與強調色、字型、字級、字體排列、文字陰影、段落強調、多欄顯示、文字進場、右側錨點、X／Y 微調 |
-| `chalkboard-vertical` 黑板直書 | 字級、正文與輔助線色、左／右錨點、X／Y 微調                                                                 |
+| `chalkboard-vertical` 黑板直書 | 字級、文字色、顯示輔助線與線色、左／右錨點、X／Y 微調                                                       |
 | `centered-vertical` 中央直書   | 字型、字級、文字對比、文字色                                                                                |
 | `fisheye-lens` 魚眼鏡筒        | 構圖、字級、文字色、鏡框及鏡內反光樣式、進場與退場、停留縮放、動態模糊、字幕分段。攝影機特效另列為即時操作  |
 | `phantom-thieves` 幻影怪盜     | 放射短句、預告信、聊天、側邊彈卡及選句剪報。各種呈現可各用預設角落或手動選擇角落。沿用歌詞行級時間。        |
@@ -193,7 +193,7 @@ Gallery 的 CoverPlayerPreview 沿用相同3:4比例與480×640設計座標，�
 - **karaoke-stack**：封裝 justfont open-huninn 2.1（OFL 1.1），使用 beat phase 與段落（見[音樂分析](music-analysis.md)）。
 - **live-stage**：轉播精簡（移除可判定的 filler、連續重複與 CJK 顯示標點）、平衡分行、忠實原文三個 policy，都保留 canonical `sourceText` 與 line／segment identity。Caption 先列出 1／2、2／1、2／2 候選，依容量、作者與跨語邊界、附著性與幾何選解，不為個別歌曲加例外。多頁且有 T2 時以 `lyricsSourceMapping.mjs` 映回來源區間插值，失敗才用 T1 權重。
 - **manga-frame**：依 document language、實際假名或既有讀音投影 `ja`／`other`。預設封裝 GenEi Antique 6.0a，可改 sans／serif／rounded；ruby 繼承對話框字體。可從 `lyrics.document` 取得已存在且 identity 相符的日文讀音；publisher 只讀 sidecar，不為 OBS 啟動讀音 worker。
-- 中央直書提供文字色與可讀性選項。黑板直書的文字色和輔助線色可分別調整，預設沿用原本的紙白色。
+- 中央直書提供文字色與可讀性選項。黑板直書以靜態不規則粉筆顆粒呈現文字，文字色與輔助線色預設為紙白。「修飾」的「輔助線」預設勾選。取消勾選只隱藏細線與線色控制，字欄定位和已儲存線色仍保留。
 - **ornate-vertical** 以 grapheme 保留原文，漢字與假名都以完整字形進場。標點隨相鄰文字出現，拉丁字母與數字成詞。關鍵字保留群組強調。分欄保留連續漢字詞，可在明確的語意詞界分開相鄰的詞。Browser Source 與 Gallery 共用 `ornateVerticalMotion.mjs` 的入場節奏。每批的首個入場單元立即顯示，後續單元淡入 0.12 秒，間隔按字量及實際可讀時間收短。時間極短、跳播、來源中斷與減少動態時，該時刻的正文直接顯示。字型為封裝的 Hina Mincho 與 GenEi Antique。
 - **chalkboard-vertical**：畫布橫向等分，預設左區，可切右區。每頁至多三欄，共用頂線與右側起點，續欄往左排。首欄在來源句首起筆，後續各欄對應自己的來源起點，缺少細時間時按字量估算，後續欄比起點稍早寫入。每欄文字與右線由上往下逐字寫入。右線與同欄文字等高。舊段在自己的時段末端退場，文字由下向上逐字收回，右線在同一時段由上向下連續擦除。換句或分頁時清掉殘留再接新段。暫停、seek、重連及 reduced motion 直接顯示已到起筆點的欄位。沿用 Open Huninn、字級和 X ±12%、Y ±25% 微調，水平位置受所選區邊界約束。見[第一版驗收](../research/design/lyrics-overlays/chalkboard-vertical-build-spec.md)。
 - **centered-vertical** 將當前頁的單欄文字水平與垂直置中。欄內字距為 0.08em，預設小字級，長句按高度分頁，換句與換頁直接替換。字型預設依歌詞語言，繁體中文使用辰宇落雁體，日文使用 Klee One SemiBold，其他或未標記語言使用 Open Huninn。可手動指定其中任一字型。白字帶薄暗邊和右下陰影，適合有直排慣例的歌詞。混語中的英文側轉，英文為主的歌曲建議使用橫排。[中央直書首版](../research/design/lyrics-overlays/centered-vertical-build-spec.md)

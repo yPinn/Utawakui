@@ -772,6 +772,13 @@
       "accentColor": {
         "label": "藝術墨影"
       },
+      "chalkboardRule": {
+        "label": "輔助線",
+        "options": {
+          "shown": "顯示",
+          "hidden": "隱藏"
+        }
+      },
       "chalkboardRuleColor": {
         "label": "輔助線色"
       },

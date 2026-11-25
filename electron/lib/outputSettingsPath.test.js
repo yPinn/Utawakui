@@ -28,6 +28,7 @@ const DATASET_TARGETS = Object.freeze({
   alignment: 'ovlAlign',
   contentWidth: 'ovlContentWidth',
   contrastStyle: 'ovlContrast',
+  chalkboardRule: 'ovlChalkboardRule',
   textShadow: 'ovlTextShadow',
   sectionAccent: 'ovlSectionAccent',
   fontFamily: 'ovlFont',
@@ -44,6 +45,11 @@ const DATASET_TARGETS = Object.freeze({
   surface: 'ovlSurface',
   vinylSurfaceLight: 'vinylSurfaceLight',
 });
+
+const SCOPED_DATASET_TEMPLATES = {
+  chalkboardRule: 'chalkboard-vertical',
+  vinylSurfaceLight: 'art-card',
+};
 
 // These settings go to the Canvas painter, timing projection or SVG grain
 // filters, so the path is checked on the normalized value.
@@ -224,11 +230,12 @@ describe('Output settings path', () => {
           : OUTPUT_APPEARANCE_DEFAULTS[field.key];
         const datasetTarget = DATASET_TARGETS[field.key];
         if (datasetTarget) {
+          const scope = SCOPED_DATASET_TEMPLATES[field.key];
           expect(
             document.documentElement.dataset[datasetTarget],
             `${templateId}.${field.key}`,
           ).toBe(
-            field.key === 'vinylSurfaceLight' && templateId !== 'art-card'
+            scope && templateId !== scope
               ? undefined
               : field.key === 'paletteId' && settings.lookAmount === 0
                 ? // A 0% look renders the template's original colors.

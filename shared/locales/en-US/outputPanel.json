@@ -776,6 +776,13 @@
       "accentColor": {
         "label": "Ink shadow"
       },
+      "chalkboardRule": {
+        "label": "Guide lines",
+        "options": {
+          "shown": "Shown",
+          "hidden": "Hidden"
+        }
+      },
       "chalkboardRuleColor": {
         "label": "Guide line color"
       },

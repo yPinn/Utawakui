@@ -81,6 +81,7 @@ Output 工作臺的「模板」（Templates）分頁提供底片清單，可直�
 | 去人聲上限         |                  | 曲庫空間中去人聲版本的清理門檻                             | Vocal-removed limit                |
 | 作品、版本、發行   |                  | 見作品與版本契約                                           | work、version、release             |
 | 文字陰影           |                  | Output 正文字形的投影，選項為「標準」和「關閉」            | Text shadow                        |
+| 輔助線             |                  | 黑板直書中每欄右側細線的勾選項                             | Guide lines                        |
 | 字體排列           |                  | 和風直書的字級排列方式，選項為「等大」和「大小字」         | Text arrangement                   |
 | 多欄顯示           |                  | 和風直書可同批顯示，或依歌詞時序一次顯示一欄               | Multiple columns                   |
 | 段落強調           |                  | 和風直書在重現歌詞段落套用的局部字色                       | Section highlights                 |

@@ -161,6 +161,7 @@ const EXPECTED_TEMPLATE_APPEARANCE_KEYS = Object.freeze({
     'fontScale',
     'fontScaleAdjustment',
     'textColor',
+    'chalkboardRule',
     'chalkboardRuleColor',
     'positionAnchor',
     'positionOffsetX',

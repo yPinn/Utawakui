@@ -749,20 +749,19 @@
     block-size: var(--ovl-chalkboard-ink-width);
     max-inline-size: 44vh;
     overflow: clip;
-    background: radial-gradient(
-        circle at 30% 25%,
-        color-mix(in srgb, currentColor 62%, transparent) 17%,
-        currentColor 35%
-      )
-      0 0 / 3px 5px;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+    /* A static alpha grain wears the pigment without introducing a dot grid. */
+    mask-image: var(--ovl-material-chalkboard-grain);
+    mask-size: clamp(96px, 4em, 216px);
   }
 
   .lyrics-overlay__chalkboard-rule {
     inline-size: var(--ovl-chalkboard-rule-width);
     background: var(--ovl-user-chalkboard-rule-color);
     opacity: 0.9;
+  }
+
+  :root[data-ovl-chalkboard-rule='hidden'] .lyrics-overlay__chalkboard-rule {
+    visibility: hidden;
   }
 
   :root[data-ovl-template='ornate-vertical'],

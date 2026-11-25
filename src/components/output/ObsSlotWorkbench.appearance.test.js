@@ -946,6 +946,27 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     );
   });
 
+  it('shows the Chalkboard guide checkbox and hides the color when unchecked', async () => {
+    const checkbox =
+      /<input(?=[^>]*id="output-appearance-chalkboardRule")(?=[^>]*type="checkbox")[^>]*>/u;
+    const shown = await renderRegisteredTemplate('chalkboard-vertical');
+    expect(shown).toContain('輔助線');
+    expect(shown.match(checkbox)?.[0]).toMatch(/\bchecked\b/u);
+    expect(shown).toContain('output-appearance-chalkboardRuleColor');
+
+    const hidden = await renderRegisteredTemplate(
+      'chalkboard-vertical',
+      {},
+      {
+        chalkboardRule: 'hidden',
+      },
+    );
+    const unchecked = hidden.match(checkbox)?.[0];
+    expect(unchecked).toBeDefined();
+    expect(unchecked).not.toMatch(/\bchecked\b/u);
+    expect(hidden).not.toContain('output-appearance-chalkboardRuleColor');
+  });
+
   it('shows the kinetic material selector with material two selected by default', async () => {
     const html = await renderToString(
       createSSRApp({

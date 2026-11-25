@@ -350,6 +350,9 @@ export function applyOverlayAppearance(document, slot) {
   root.dataset.ovlKineticArrangement = appearance.kineticArrangement;
   root.dataset.ovlOrnateArrangement = appearance.ornateArrangement;
   root.dataset.ovlOrnateEntrance = appearance.ornateEntrance;
+  if (templateId === 'chalkboard-vertical')
+    root.dataset.ovlChalkboardRule = appearance.chalkboardRule;
+  else delete root.dataset.ovlChalkboardRule;
   root.dataset.ovlContrast = appearance.contrastStyle;
   root.dataset.ovlTextShadow = appearance.textShadow;
   root.dataset.ovlSectionAccent = appearance.sectionAccent;

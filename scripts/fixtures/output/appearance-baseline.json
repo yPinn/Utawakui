@@ -101,6 +101,11 @@
       "scope": "slot-template",
       "activation": "explicit-selection"
     },
+    "chalkboardRule": {
+      "level": "opt",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
+    },
     "chalkboardRuleColor": {
       "level": "advanced",
       "scope": "slot-template",
@@ -1717,6 +1722,28 @@
           "defaultValue": "#fffdfa",
           "group": "custom-color",
           "groupOrder": 20
+        },
+        {
+          "scope": "template",
+          "key": "chalkboardRule",
+          "family": "visibility",
+          "tier": "basic",
+          "reflow": false,
+          "order": 10,
+          "control": "select",
+          "editor": "checkbox",
+          "checkedValue": "shown",
+          "defaultValue": "shown",
+          "options": [
+            {
+              "id": "shown"
+            },
+            {
+              "id": "hidden"
+            }
+          ],
+          "group": "decoration",
+          "groupOrder": 55
         },
         {
           "scope": "template",

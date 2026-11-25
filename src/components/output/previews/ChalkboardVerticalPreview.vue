@@ -82,6 +82,7 @@ useOutputPreviewMotion({
 <template>
   <div
     class="chalkboard-preview"
+    :data-ovl-chalkboard-rule="scene.appearance?.chalkboardRule"
     :class="{
       'chalkboard-preview--right':
         scene.appearance?.positionAnchor === 'center-right',
@@ -100,6 +101,8 @@ useOutputPreviewMotion({
     </span>
   </div>
 </template>
+
+<style src="../../../../overlay/shared/tokens.css"></style>
 
 <style scoped>
 .chalkboard-preview {
@@ -156,6 +159,8 @@ useOutputPreviewMotion({
   writing-mode: vertical-rl;
   white-space: pre-wrap;
   max-inline-size: 24.75cqi;
+  mask-image: var(--ovl-material-chalkboard-grain);
+  mask-size: 4em;
 }
 
 .chalkboard-preview__rule,
@@ -163,5 +168,12 @@ useOutputPreviewMotion({
   inline-size: max(1px, 0.03em);
   background: currentColor;
   opacity: 0.78;
+}
+
+.chalkboard-preview[data-ovl-chalkboard-rule='hidden']
+  .chalkboard-preview__rule,
+.chalkboard-preview[data-ovl-chalkboard-rule='hidden']
+  :deep(.lyrics-overlay__chalkboard-rule) {
+  visibility: hidden;
 }
 </style>

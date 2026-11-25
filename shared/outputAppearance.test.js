@@ -182,6 +182,7 @@ describe('output appearance schema', () => {
     });
     expect(normalizeOutputAppearance({}, chalkboard)).toMatchObject({
       ...defaults,
+      chalkboardRule: 'shown',
       chalkboardRuleColor: '#fffdfa',
     });
     expect(
@@ -195,18 +196,23 @@ describe('output appearance schema', () => {
     });
     expect(
       normalizeOutputAppearance(
-        { textColor: '#abcdef', chalkboardRuleColor: '#123456' },
+        {
+          textColor: '#abcdef',
+          chalkboardRule: 'hidden',
+          chalkboardRuleColor: '#123456',
+        },
         chalkboard,
       ),
     ).toMatchObject({
       textColor: '#abcdef',
+      chalkboardRule: 'hidden',
       chalkboardRuleColor: '#123456',
     });
-    expect(
-      outputAppearanceFieldsForTemplate(centered.templateId).map(
-        ({ key }) => key,
-      ),
-    ).not.toContain('chalkboardRuleColor');
+    const centeredKeys = outputAppearanceFieldsForTemplate(
+      centered.templateId,
+    ).map(({ key }) => key);
+    expect(centeredKeys).not.toContain('chalkboardRule');
+    expect(centeredKeys).not.toContain('chalkboardRuleColor');
     expect(
       normalizeOutputAppearance({ chalkboardRuleColor: '#123456' }, centered)
         .chalkboardRuleColor,
@@ -524,6 +530,7 @@ describe('output appearance schema', () => {
       kineticArrangement: 'straight',
       textColor: '#fff8ec',
       accentColor: '#ffffff',
+      chalkboardRule: 'shown',
       chalkboardRuleColor: '#fffdfa',
       positionAnchor: 'center-right',
       positionOffsetX: 0,

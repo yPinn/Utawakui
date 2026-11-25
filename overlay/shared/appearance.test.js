@@ -144,7 +144,7 @@ describe('overlay appearance', () => {
     expect(document.documentElement.dataset.ovlSurface).toBe('transparent');
   });
 
-  it('applies distinct Chalkboard ink and guide colors to Browser Source', () => {
+  it('applies Chalkboard ink, guide color and visibility to Browser Source', () => {
     const setProperty = vi.fn();
     const document = {
       documentElement: { dataset: {}, style: { setProperty } },
@@ -161,6 +161,13 @@ describe('overlay appearance', () => {
       '--ovl-user-chalkboard-rule-color',
       '#aabbcc',
     );
+    expect(document.documentElement.dataset.ovlChalkboardRule).toBe('shown');
+
+    applyOverlayAppearance(document, {
+      templateId: 'chalkboard-vertical',
+      settings: { chalkboardRule: 'hidden', chalkboardRuleColor: '#aabbcc' },
+    });
+    expect(document.documentElement.dataset.ovlChalkboardRule).toBe('hidden');
 
     applyOverlayAppearance(document, {
       templateId: 'centered-vertical',
@@ -171,6 +178,7 @@ describe('overlay appearance', () => {
       '#bbddee',
     );
     expect(document.documentElement.dataset.ovlContrast).toBe('strong-outline');
+    expect(document.documentElement.dataset.ovlChalkboardRule).toBeUndefined();
   });
 
   it('applies only active-template ids and normalized CSS values to the root', () => {

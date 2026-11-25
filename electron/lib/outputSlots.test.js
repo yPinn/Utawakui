@@ -168,6 +168,33 @@ describe('outputSlots', () => {
     expect(slots.setlist.settings.fontFamily).toBe(initialSetlistFont);
   });
 
+  it('recalls and publishes Chalkboard guide visibility with its saved color', () => {
+    const guide = { chalkboardRule: 'hidden', chalkboardRuleColor: '#aabbcc' };
+    upsertOutputSlot(dir, 'lyrics', {
+      templateId: 'chalkboard-vertical',
+      settings: guide,
+    });
+    upsertOutputSlot(dir, 'lyrics', {
+      templateId: 'centered-vertical',
+      settings: {},
+      recallAppearance: true,
+    });
+    expect(loadOutputSlots(dir).slots.lyrics.settings).not.toHaveProperty(
+      'chalkboardRule',
+    );
+    upsertOutputSlot(dir, 'lyrics', {
+      templateId: 'chalkboard-vertical',
+      settings: {},
+      recallAppearance: true,
+    });
+
+    const { slots } = loadOutputSlots(dir);
+    expect(slots.lyrics.settings).toMatchObject(guide);
+    expect(projectPublicOutputSlots(slots).lyrics.settings).toMatchObject(
+      guide,
+    );
+  });
+
   it('replaces retired saved templates and rejects selecting them again', () => {
     fs.writeFileSync(
       filePath,
