@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import viteConfig from '../vite.config.js';
 import rendererEntries from '../shared/rendererEntries.json' with { type: 'json' };
@@ -75,6 +76,7 @@ describe('development startup contract', () => {
   });
 
   it('does not watch generated artifacts during development', () => {
+    const root = path.resolve(import.meta.dirname, '..').replaceAll('\\', '/');
     expect(viteConfig.server?.watch?.ignored).toEqual(
       expect.arrayContaining([
         '**/tasks/**',
@@ -82,6 +84,14 @@ describe('development startup contract', () => {
         '**/coverage/**',
         '**/release/**',
         '**/release-*/**',
+        '**/.benchmarks/**',
+        '**/.models/**',
+        '**/.build/**',
+        '**/.venv/**',
+        '**/uv-cache/**',
+        '**/.wrangler/**',
+        `${root}/runtime/**`,
+        `${root}/site/**`,
       ]),
     );
   });

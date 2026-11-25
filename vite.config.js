@@ -30,6 +30,7 @@ const RUNTIME_TEST_PATTERNS = [
   'electron/lib/featureDependencies/archive.runtime.test.js',
 ];
 const TEST_EXCLUDE = ['coverage/**', 'dist/**', '**/node_modules/**'];
+const projectWatchRoot = __dirname.replaceAll('\\', '/');
 // Istanbul instrumentation slows every test 2-3x; scale budgets, not hang checks.
 const TIMEOUT_SCALE = process.argv.includes('--coverage') ? 3 : 1;
 
@@ -64,6 +65,17 @@ module.exports = defineConfig({
         '**/coverage/**',
         '**/release/**',
         '**/release-*/**',
+        '**/.benchmarks/**',
+        '**/.models/**',
+        '**/.build/**',
+        '**/.venv/**',
+        '**/venv/**',
+        '**/uv-cache/**',
+        '**/__pycache__/**',
+        '**/.pytest_cache/**',
+        '**/.wrangler/**',
+        `${projectWatchRoot}/runtime/**`,
+        `${projectWatchRoot}/site/**`,
       ],
     },
   },

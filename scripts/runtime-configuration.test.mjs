@@ -20,9 +20,76 @@ describe('runtime configuration boundaries', () => {
       )) {
         expect(fs.statSync(path.join(root, target)).isFile(), name).toBe(true);
       }
-      for (const [, target] of command.matchAll(/\bnpm run ([\w:-]+)/g)) {
-        expect(scripts, name).toHaveProperty(target);
+      // `--prefix <dir>` runs the script from that subproject's package.json.
+      for (const [, target, prefix] of command.matchAll(
+        /\bnpm run ([\w:-]+)(?:\s+--prefix\s+([\w./-]+))?/g,
+      )) {
+        const owner = prefix
+          ? JSON.parse(read(`${prefix}/package.json`)).scripts
+          : scripts;
+        expect(owner, name).toHaveProperty(target);
       }
+    }
+  });
+
+  it('checks staged Markdown filenames with spaces through the pre-commit configuration', () => {
+    const hook = read('.husky/pre-commit').trim().split(/\s+/u);
+    expect(hook.slice(0, 4)).toEqual(['npx', '--no', '--', 'lint-staged']);
+
+    const tasks = path.join(root, 'tasks');
+    fs.mkdirSync(tasks, { recursive: true });
+    const cwd = fs.mkdtempSync(path.join(tasks, 'lint-staged-'));
+    const markdownFile = 'docs/heading with spaces.md';
+    const pathKey =
+      Object.keys(process.env).find((key) => key.toUpperCase() === 'PATH') ??
+      'PATH';
+    const env = {
+      ...process.env,
+      [pathKey]: [path.join(root, 'node_modules/.bin'), process.env[pathKey]]
+        .filter(Boolean)
+        .join(path.delimiter),
+    };
+    const options = {
+      cwd,
+      env,
+      encoding: 'utf8',
+      windowsHide: true,
+      timeout: 10_000,
+    };
+    try {
+      for (const file of [
+        '.gitignore',
+        '.markdownlint-cli2.jsonc',
+        'package.json',
+      ]) {
+        fs.copyFileSync(path.join(root, file), path.join(cwd, file));
+      }
+      fs.mkdirSync(path.join(cwd, 'docs'));
+      fs.writeFileSync(path.join(cwd, markdownFile), '# Title\n');
+
+      for (const args of [
+        ['init', '--quiet'],
+        ['add', '--', markdownFile],
+      ]) {
+        const result = spawnSync('git', args, options);
+        expect(result.status, result.stderr).toBe(0);
+      }
+      const result = spawnSync(
+        process.execPath,
+        [
+          path.join(root, 'node_modules/lint-staged/bin/lint-staged.js'),
+          ...hook.slice(4),
+          '--no-stash',
+          '--verbose',
+        ],
+        options,
+      );
+      const output = result.stdout + result.stderr;
+      expect(result.status, result.error?.message ?? output).toBe(0);
+      expect(output).toContain(`Finding: ${markdownFile}`);
+      expect(output).toContain('Linting: 1 file');
+    } finally {
+      fs.rmSync(cwd, { recursive: true, force: true });
     }
   });
 
@@ -41,6 +108,28 @@ describe('runtime configuration boundaries', () => {
       );
       expect(result.status, candidate).toBe(0);
     }
+  });
+
+  it.each([
+    ['.env', 0],
+    ['.env.development.local', 0],
+    ['site/.env.production', 0],
+    ['services/feedback-relay/.dev.vars', 0],
+    ['services/feedback-relay/.dev.vars.staging', 0],
+    ['site/dist/index.html', 0],
+    ['site/node_modules/vue/package.json', 0],
+    ['site/.env.example', 1],
+    ['site/.env.production.example', 1],
+    ['services/feedback-relay/.dev.vars.example', 1],
+    ['site/src/App.vue', 1],
+    ['build/installer.nsh', 1],
+  ])('applies the Git ignore policy to %s', (candidate, code) => {
+    const result = spawnSync(
+      'git',
+      ['check-ignore', '--no-index', '--quiet', candidate],
+      { cwd: root },
+    );
+    expect(result.status).toBe(code);
   });
 
   it('packages fixed notices, the portrait model, app-owned Python workers and Audio catalogs', () => {

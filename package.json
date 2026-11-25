@@ -51,11 +51,11 @@
     "lyrics:contracts": "node scripts/lyrics-provider-contract-cli.mjs"
   },
   "lint-staged": {
-    "*.{cjs,js,vue}": [
+    "*.{cjs,js,mjs,vue}": [
       "eslint --fix",
       "prettier --write"
     ],
-    "*.{json,css,html,yml,yaml}": [
+    "*.{json,jsonc,css,html,yml,yaml}": [
       "prettier --write"
     ],
     "*.md": [
