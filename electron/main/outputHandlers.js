@@ -24,7 +24,7 @@ const {
 } = require('../../shared/outputRuntimeValues.json');
 const {
   slots: OUTPUT_SLOT_DEFINITIONS,
-  developmentTemplateIds,
+  developmentTemplateIds: DEVELOPMENT_TEMPLATE_IDS,
 } = require('../../shared/outputTemplateValues.json');
 
 const OUTPUT_PATH_BY_KIND = new Map(
@@ -48,6 +48,8 @@ function registerOutputHandlers({
   ipcMain,
   server,
   isDev = false,
+  // Injectable so the dev-only gate stays tested while no template uses it.
+  developmentTemplateIds = DEVELOPMENT_TEMPLATE_IDS,
   requireFeatureGate,
   featureIds,
   getConfig,

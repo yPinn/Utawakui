@@ -38,7 +38,7 @@
     "phantom-thieves": "lyrics",
     "textured-credits": "lyrics"
   },
-  "developmentTemplateIds": ["textured-credits"],
+  "developmentTemplateIds": [],
   "templateCaptureSizes": {
     "receipt-setlist": {
       "default": "large",

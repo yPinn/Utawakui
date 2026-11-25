@@ -59,7 +59,8 @@
     "texturedCredits": {
       "name": "紋理顯字",
       "facts": {
-        "direction": "日文直排，其他語言橫排"
+        "direction": "日文直排，其他語言橫排",
+        "language": "各種語言"
       }
     },
     "phantomThieves": {

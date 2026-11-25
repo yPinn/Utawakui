@@ -23,6 +23,7 @@ describe('Output template search', () => {
         'live-stage',
         'fisheye-lens',
         'phantom-thieves',
+        'textured-credits',
       ]);
       expect(search('setlist', query)).toEqual([]);
     },

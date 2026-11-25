@@ -87,7 +87,7 @@ Output 工作臺的「模板」（Templates）分頁提供底片清單，可直�
 | 段落強調           |                  | 和風直書在重現歌詞段落套用的局部字色                       | Section highlights                 |
 | 魚眼鏡筒           |                  | 畫面輸出的門鏡弧列字幕模板                                 | Fisheye Lens                       |
 | 幻影怪盜           |                  | 畫面輸出的拼貼歌詞模板                                     | Phantom Thieves                    |
-| 紋理顯字           |                  | 開發版的畫面輸出歌詞模板                                   | Textured Credits                   |
+| 紋理顯字           |                  | 畫面輸出的紋路燃入歌詞模板                                 | Textured Credits                   |
 | 選句剪報           |                  | 幻影怪盜中以黑白折角紙帶顯示前後句與當句的構圖             | Choice Stack                       |
 | 有頭像             |                  | 顯示人像框的側邊彈卡樣式                                   | With Avatar                        |
 | 呈現方式、聊天外形 |                  | 幻影怪盜的構圖選項及聊天變化                               | Presentation, Chat Shape           |

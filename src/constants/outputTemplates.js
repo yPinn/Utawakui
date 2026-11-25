@@ -209,10 +209,12 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
   {
     id: 'textured-credits',
     kind: 'lyrics',
+    recommendedLanguages: ['any'],
     order: 70,
     name: t('outputPanel.templates.texturedCredits.name'),
     facts: lyricsTemplateFacts([
       ['direction', t('outputPanel.templates.texturedCredits.facts.direction')],
+      ['language', t('outputPanel.templates.texturedCredits.facts.language')],
     ]),
   },
   {

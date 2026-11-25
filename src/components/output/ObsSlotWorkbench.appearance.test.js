@@ -38,6 +38,7 @@ const templateTabLabels = {
   'cover-player': ['外觀', '文字'],
   'receipt-setlist': ['動態', '文字', '外觀', '修飾'],
   'ribbon-setlist': ['動態', '外觀', '修飾'],
+  'textured-credits': ['文字', '外觀'],
 };
 const workbenchTabOrder = [
   '顯示',

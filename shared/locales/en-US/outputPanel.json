@@ -59,7 +59,8 @@
     "texturedCredits": {
       "name": "Textured Credits",
       "facts": {
-        "direction": "Vertical Japanese, horizontal for other languages"
+        "direction": "Vertical Japanese, horizontal for other languages",
+        "language": "Any language"
       }
     },
     "phantomThieves": {

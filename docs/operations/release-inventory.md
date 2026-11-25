@@ -553,9 +553,7 @@ Textured Credits uses the same Overlay glob and exact routes for
 (`dist/pixi.min.js`, `dist/packages/unsafe-eval.min.js`) and `pixi-filters`
 6.1.5 (`dist/pixi-filters.js`) through `/overlay/vendor/` routes;
 `electron-builder.yml` ships only those files, and the IIFE builds already
-bundle the packages' own dependencies. The template is
-selectable in development mode. Other builds resolve a saved development
-selection to the default Lyrics template. The texture is generated locally.
+bundle the packages' own dependencies. The texture is generated locally.
 
 Chalkboard Vertical adds `overlay/lyrics/chalkboardVertical.mjs` under the
 existing overlay package rule and one exact Browser Source route. It reuses the

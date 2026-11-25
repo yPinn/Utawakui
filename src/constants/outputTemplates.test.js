@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { outputAppearanceFieldKeysForTemplate } from '../../shared/outputAppearance.mjs';
 import { lyricsTemplateCapabilities } from '../../shared/presentation/lyricsTemplateCapabilities.mjs';
 import {
@@ -13,6 +13,7 @@ import { createOutputPreviewScene } from '../../shared/presentation/outputPrevie
 
 const EXPECTED_TEMPLATE_DISPLAY_NAMES = Object.freeze({
   'phantom-thieves': '幻影怪盜',
+  'textured-credits': '紋理顯字',
   'receipt-setlist': '票據歌單',
   'ribbon-setlist': '紅黑緞帶',
   'queue-board': '夜色歌單',
@@ -29,35 +30,32 @@ const EXPECTED_TEMPLATE_DISPLAY_NAMES = Object.freeze({
   'cover-player': '封面電台',
 });
 
-it('includes Textured Credits as a selectable Lyrics template in development', async () => {
+it('ships Textured Credits as a selectable Lyrics template', () => {
+  const lyrics = getOutputWorkbenchData().templateGroups.find(
+    ({ kind }) => kind === 'lyrics',
+  );
   expect(
-    getOutputWorkbenchData().templates.find(
-      ({ id }) => id === 'textured-credits',
-    ),
-  ).toBeUndefined();
-  vi.stubEnv('MODE', 'development');
-  vi.resetModules();
-  try {
-    const dev = await import('./outputTemplates.js');
-    const lyrics = dev
-      .getOutputWorkbenchData()
-      .templateGroups.find(({ kind }) => kind === 'lyrics');
-    expect(
-      lyrics.templates.find(({ id }) => id === 'textured-credits'),
-    ).toMatchObject({
-      name: '紋理顯字',
-      availability: { available: true },
-      facts: expect.arrayContaining([
-        expect.objectContaining({ key: 'translation', value: '獨立字幕' }),
-      ]),
-    });
-  } finally {
-    vi.unstubAllEnvs();
-    vi.resetModules();
-  }
+    lyrics.templates.find(({ id }) => id === 'textured-credits'),
+  ).toMatchObject({
+    name: '紋理顯字',
+    availability: { available: true },
+    facts: expect.arrayContaining([
+      expect.objectContaining({ key: 'translation', value: '獨立字幕' }),
+    ]),
+  });
 });
 
 const EXPECTED_TEMPLATE_APPEARANCE_KEYS = Object.freeze({
+  'textured-credits': [
+    'paletteId',
+    'lookAmount',
+    'fontFamily',
+    'fontScale',
+    'fontScaleAdjustment',
+    'alignment',
+    'filmGrainAmount',
+    'filmGrainSize',
+  ],
   'phantom-thieves': [
     'paletteId',
     'lookAmount',
@@ -518,6 +516,7 @@ describe('output template registry', () => {
       'centered-vertical',
       'fisheye-lens',
       'phantom-thieves',
+      'textured-credits',
     ]);
     expect(
       lyricsGroup.templates.find((template) => template.id === 'live-stage'),

@@ -320,6 +320,7 @@ describe('output handlers', () => {
         getConfig: () => ({}),
         resolveDownloadDir: () => dir,
         isDev,
+        developmentTemplateIds: ['textured-credits'],
       });
       return { handlers: ipcMain.handlers, setOverlaySlots };
     }
@@ -338,6 +339,22 @@ describe('output handlers', () => {
       release.handlers.get('output-slots:upsert')(null, 'lyrics', slot),
     ).rejects.toThrow('Invalid output slot');
     expect(await dev.handlers.get('output-slots:list')()).toMatchObject({
+      slots: { lyrics: { templateId: 'textured-credits' } },
+    });
+  });
+
+  it('keeps Textured Credits in release builds now that it has shipped', async () => {
+    const ipcMain = createIpcMain();
+    registerOutputHandlers({
+      ipcMain,
+      server: { setOverlaySlots: vi.fn() },
+      getConfig: () => ({}),
+      resolveDownloadDir: () => dir,
+      isDev: false,
+    });
+    const slot = { templateId: 'textured-credits', settings: {} };
+    await ipcMain.handlers.get('output-slots:upsert')(null, 'lyrics', slot);
+    expect(await ipcMain.handlers.get('output-slots:list')()).toMatchObject({
       slots: { lyrics: { templateId: 'textured-credits' } },
     });
   });
