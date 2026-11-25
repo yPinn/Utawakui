@@ -7,6 +7,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { runContractCli } from './lyrics-provider-contract-cli.mjs';
 import { loadContractCassette } from './lyrics-provider-contracts.mjs';
 
+// Real child processes start slowly under full-suite load; stay inside the
+// runtime project's 20 s test budget instead of failing first.
+const CHILD_DEADLINE_MS = 15_000;
+
 const folders = [];
 afterEach(() => {
   for (const folder of folders.splice(0))
@@ -103,7 +107,7 @@ describe('provider contract CLI', () => {
     );
     const success = spawnSync(process.execPath, [script, 'replay', 'lrclib'], {
       encoding: 'utf8',
-      timeout: 5000,
+      timeout: CHILD_DEADLINE_MS,
     });
     expect(success.status).toBe(0);
     expect(JSON.parse(success.stdout)).toMatchObject({
@@ -113,7 +117,7 @@ describe('provider contract CLI', () => {
     const invalid = spawnSync(
       process.execPath,
       [script, 'invalid', 'private-secret'],
-      { encoding: 'utf8', timeout: 5000 },
+      { encoding: 'utf8', timeout: CHILD_DEADLINE_MS },
     );
     expect(invalid.status).toBe(1);
     expect(invalid.stderr).toContain('Usage:');

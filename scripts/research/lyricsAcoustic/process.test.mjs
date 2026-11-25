@@ -1,11 +1,18 @@
 import { describe, it, expect } from 'vitest';
 import processTools from './process.cjs';
+
+// Real child processes start slowly under full-suite load; stay inside the
+// runtime project's 20 s test budget instead of failing first.
+const CHILD_DEADLINE_MS = 15_000;
 const { createProcessGroup } = processTools;
 const echo = `process.stdin.on('data', b => process.stdout.write(b));`;
 
 describe('owned research worker lifetime', () => {
   it('rejects oversized requests, unexpected response ids and duplicate pending requests', async () => {
-    const group = createProcessGroup({ timeoutMs: 5000, maxMessageBytes: 100 });
+    const group = createProcessGroup({
+      timeoutMs: CHILD_DEADLINE_MS,
+      maxMessageBytes: 100,
+    });
     const worker = group.rpc(process.execPath, [
       '-e',
       'setInterval(()=>{},1000)',
@@ -18,7 +25,7 @@ describe('owned research worker lifetime', () => {
     await group.close();
     expect(await pending).toMatch(/cancel|closed/);
     for (const response of ['{"id":99}\n', '{"id":1}\n{"id":1}\n']) {
-      const unexpected = createProcessGroup({ timeoutMs: 5000 });
+      const unexpected = createProcessGroup({ timeoutMs: CHILD_DEADLINE_MS });
       const child = unexpected.rpc(process.execPath, [
         '-e',
         `process.stdin.once('data',()=>process.stdout.write(${JSON.stringify(response)}));setInterval(()=>{},1000)`,
@@ -28,7 +35,7 @@ describe('owned research worker lifetime', () => {
     }
   });
   it('rejects unsuccessful decoding and a worker that closes without a response', async () => {
-    const group = createProcessGroup({ timeoutMs: 5000 });
+    const group = createProcessGroup({ timeoutMs: CHILD_DEADLINE_MS });
     await expect(
       group.capture(process.execPath, ['-e', 'process.exit(2)'], 100),
     ).rejects.toThrow(/decode failed/);
@@ -38,7 +45,7 @@ describe('owned research worker lifetime', () => {
     await group.close();
   });
   it('exchanges bounded JSON and waits for every owned worker to close', async () => {
-    const group = createProcessGroup({ timeoutMs: 5000 });
+    const group = createProcessGroup({ timeoutMs: CHILD_DEADLINE_MS });
     const worker = group.rpc(process.execPath, ['-e', echo]);
     const result = await worker.request({ id: 1, text: '合成' });
     expect(result).toEqual({ id: 1, text: '合成' });
@@ -47,7 +54,7 @@ describe('owned research worker lifetime', () => {
     expect(group.pids()).toEqual([]);
   });
   it('cancels both workers and rejects an in-flight request', async () => {
-    const group = createProcessGroup({ timeoutMs: 5000 });
+    const group = createProcessGroup({ timeoutMs: CHILD_DEADLINE_MS });
     const worker = group.rpc(process.execPath, [
       '-e',
       'setInterval(()=>{},1000)',
@@ -64,7 +71,7 @@ describe('owned research worker lifetime', () => {
       `process.stdout.write('bad\n');setInterval(()=>{},1000)`,
     ]) {
       const group = createProcessGroup({
-        timeoutMs: 5000,
+        timeoutMs: CHILD_DEADLINE_MS,
         maxMessageBytes: 100,
       });
       const worker = group.rpc(process.execPath, ['-e', code]);
@@ -88,7 +95,7 @@ describe('owned research worker lifetime', () => {
     await absent.close();
   });
   it('bounds binary decoding and rejects commands after cancellation', async () => {
-    const group = createProcessGroup({ timeoutMs: 5000 });
+    const group = createProcessGroup({ timeoutMs: CHILD_DEADLINE_MS });
     expect(
       await group.capture(
         process.execPath,

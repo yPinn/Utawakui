@@ -7,6 +7,10 @@ import { Worker } from 'node:worker_threads';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { buildReleaseRuntime } from './build-release-runtime.mjs';
 
+// Real child processes start slowly under full-suite load; stay inside the
+// runtime project's 20 s test budget instead of failing first.
+const CHILD_DEADLINE_MS = 15_000;
+
 const root = path.resolve(import.meta.dirname, '..');
 const require = createRequire(import.meta.url);
 const temporary = [];
@@ -231,7 +235,7 @@ describe('application release entries', () => {
     expect(require(probePath).probeLyricsEnvironment).toBeTypeOf('function');
     const result = spawnSync(process.execPath, [probePath], {
       encoding: 'utf8',
-      timeout: 5000,
+      timeout: CHILD_DEADLINE_MS,
       windowsHide: true,
     });
     expect(result.error).toBeUndefined();
