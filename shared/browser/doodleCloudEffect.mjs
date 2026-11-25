@@ -1107,6 +1107,19 @@ export function createDoodleCloudEffect({
     app.render();
   }
 
+  function disposeRenderer() {
+    observer?.disconnect();
+    observer = null;
+    if (app) {
+      scene?.glowSource.destroy(true);
+      for (const layer of scene?.layers ?? [])
+        releaseTexture(pixi, layer.sprite);
+      app.destroy({ removeView: false }, { children: true });
+    }
+    app = null;
+    scene = null;
+  }
+
   const ready = (async () => {
     const instance = new pixi.Application();
     await instance.init({
@@ -1123,8 +1136,8 @@ export function createDoodleCloudEffect({
       instance.destroy({ removeView: false }, { children: true });
       return;
     }
-    instance.ticker?.stop();
     app = instance;
+    instance.ticker?.stop();
     scene = buildScene(pixi, filters, documentApi, theme);
     app.stage.addChild(scene.root);
     const view = documentApi.defaultView;
@@ -1134,8 +1147,7 @@ export function createDoodleCloudEffect({
     }
     resize();
   })().catch(() => {
-    // WebGL unavailable or lost during setup: keep the DOM text only.
-    app = null;
+    disposeRenderer();
     canvas.hidden = true;
   });
 
@@ -1151,15 +1163,7 @@ export function createDoodleCloudEffect({
     },
     destroy() {
       destroyed = true;
-      observer?.disconnect();
-      if (app) {
-        scene?.glowSource.destroy(true);
-        for (const layer of scene?.layers ?? [])
-          releaseTexture(pixi, layer.sprite);
-        app.destroy({ removeView: false }, { children: true });
-      }
-      app = null;
-      scene = null;
+      disposeRenderer();
       canvas.remove?.();
     },
   };

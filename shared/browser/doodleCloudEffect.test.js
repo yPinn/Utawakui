@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
+  createDoodleCloudEffect,
   createDoodleCloudState,
   DOODLE_LAYER_LIMIT,
   DOODLE_LAYER_RANGE,
@@ -12,6 +13,33 @@ import {
   layerMotion,
   layoutDoodles,
 } from './doodleCloudEffect.mjs';
+
+describe('doodle cloud effect lifecycle', () => {
+  it('releases the initialized renderer when scene setup fails', async () => {
+    const canvas = {
+      setAttribute: vi.fn(),
+      getContext: () => null,
+      remove: vi.fn(),
+    };
+    const destroy = vi.fn();
+    class Application {
+      async init() {}
+      destroy = destroy;
+    }
+    const effect = createDoodleCloudEffect({
+      pixi: { Application },
+      documentApi: { createElement: () => canvas },
+      state: createDoodleCloudState(),
+    });
+
+    await effect.ready;
+    expect(canvas.hidden).toBe(true);
+    expect(destroy).toHaveBeenCalledTimes(1);
+    effect.destroy();
+    expect(canvas.remove).toHaveBeenCalledOnce();
+    expect(destroy).toHaveBeenCalledTimes(1);
+  });
+});
 
 const measureText = (text, size) => text.length * size * 0.5;
 const horizontal = {
