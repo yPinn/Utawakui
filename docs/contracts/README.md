@@ -5,6 +5,7 @@
 ## 曲庫、匯入與播放
 
 - [匯入session與批次互動](import-task-session.md)
+- [平台播放清單匯入](account-playlist-import.md)
 - [曲庫空間管理](library-storage-management.md)
 - [曲目編輯](track-editing.md)
 - [曲庫檢查與校對](library-reconciliation.md)

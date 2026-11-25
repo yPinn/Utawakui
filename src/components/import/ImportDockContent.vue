@@ -9,6 +9,7 @@ import {
   Download,
   ExternalLink,
   FolderPlus,
+  ListMusic,
   RefreshCw,
   Square,
 } from '../../icons/index.js';
@@ -30,6 +31,7 @@ import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import ImportSourceField from './ImportSourceField.vue';
 import ImportReviewModal from './ImportReviewModal.vue';
+import PlaylistImportModal from './PlaylistImportModal.vue';
 import ImportSourceRow from './ImportSourceRow.vue';
 import ImportActivityMonitor from './ImportActivityMonitor.vue';
 import { t } from '../../utils/i18n.js';
@@ -74,6 +76,7 @@ onMounted(() => {
 });
 
 const reviewOpen = shallowRef(false);
+const playlistImportOpen = shallowRef(false);
 const { collectionArtwork } = useLibraryArtwork();
 const reviewBatchId = shallowRef(null);
 const reviewBatch = computed(
@@ -253,7 +256,10 @@ function clearCompletedWork() {
 watch(
   () => props.active,
   (active) => {
-    if (!active) reviewOpen.value = false;
+    if (!active) {
+      reviewOpen.value = false;
+      playlistImportOpen.value = false;
+    }
   },
 );
 </script>
@@ -265,6 +271,16 @@ watch(
       :batch="reviewBatch"
       @close="reviewOpen = false"
       @submitted="handleSubmitted"
+    />
+    <PlaylistImportModal
+      v-if="playlistImportOpen"
+      @close="playlistImportOpen = false"
+      @submitted="
+        (id) => {
+          playlistImportOpen = false;
+          openBatchReview(id);
+        }
+      "
     />
 
     <UiCheckbox
@@ -347,6 +363,12 @@ watch(
 
     <AppRightDockSection :heading="t('import.dock.external')" divided>
       <template #trailing>
+        <!-- Playlist import is an external source, so it joins the section's icon actions. -->
+        <UiIconButton
+          :icon="ListMusic"
+          :label="t('import.playlists.title')"
+          @click="playlistImportOpen = true"
+        />
         <UiIconButton
           :icon="ExternalLink"
           :label="t('import.dock.moreOnYtMusic')"

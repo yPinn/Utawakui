@@ -16,6 +16,7 @@ describe('Settings document section ownership', () => {
     const sectionComponents = [
       'SettingsApplicationSection',
       'SettingsLibrarySection',
+      'PlatformVideoAccountsSection',
       'SettingsCapabilitiesSection',
       'CaptureOutputSettings',
       'SettingsSupportSection',
@@ -58,6 +59,15 @@ describe('Settings document section ownership', () => {
     expect(capabilitiesSource.indexOf('name="output-start"')).toBeLessThan(
       capabilitiesSource.indexOf('<SettingsFeatureGateRow'),
     );
+  });
+
+  it('keeps account authorization and download sign-in in the same settings section', () => {
+    const accountsSource = readSource('./PlatformVideoAccountsSection.vue');
+    expect(accountsSource).toContain('id="settings-platform-accounts"');
+    expect(accountsSource).toContain('getPlatformVideoAccount');
+    expect(accountsSource).toContain('getSpotifyPlaylistImportStatus');
+    expect(accountsSource).toContain('<YoutubeLoginRow');
+    expect(capabilitiesSource).not.toContain('<YoutubeLoginRow');
   });
 
   it('keeps Windows behavior with application and updates with support', () => {

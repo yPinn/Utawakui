@@ -1,5 +1,5 @@
 <script setup>
-import { computed, useId } from 'vue';
+import { computed, shallowRef, useId } from 'vue';
 import { ICON_SIZE } from '../../icons/index.js';
 import UiChip from '../ui/UiChip.vue';
 import UiOverflowTooltip from '../ui/UiOverflowTooltip.vue';
@@ -7,6 +7,7 @@ import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   icon: { type: [Object, Function], default: null },
+  avatarSrc: { type: String, default: '' },
   title: { type: String, required: true },
   description: { type: String, default: '' },
   guidance: { type: String, default: '' },
@@ -27,6 +28,7 @@ const props = defineProps({
 });
 
 const titleId = `settings-document-item-${useId()}`;
+const failedAvatar = shallowRef('');
 const resolvedTitleTag = computed(
   () => props.titleTag || (props.variant === 'nested' ? 'h4' : 'h3'),
 );
@@ -45,11 +47,20 @@ const supportingCopy = computed(() =>
   >
     <div class="settings-document-item__lead">
       <div
-        v-if="icon && variant !== 'nested'"
+        v-if="(icon || avatarSrc) && variant !== 'nested'"
         class="settings-document-item__icon"
         aria-hidden="true"
       >
-        <component :is="icon" :size="ICON_SIZE" />
+        <img
+          v-if="avatarSrc && avatarSrc !== failedAvatar"
+          :key="avatarSrc"
+          class="settings-document-item__avatar"
+          :src="avatarSrc"
+          alt=""
+          referrerpolicy="no-referrer"
+          @error="failedAvatar = avatarSrc"
+        />
+        <component :is="icon" v-else-if="icon" :size="ICON_SIZE" />
       </div>
 
       <div class="settings-document-item__copy">
@@ -137,6 +148,14 @@ const supportingCopy = computed(() =>
   inline-size: var(--ui-icon-button-size-md);
   block-size: var(--ui-icon-button-size-md);
   color: var(--ui-color-accent);
+}
+
+.settings-document-item__avatar {
+  inline-size: 100%;
+  block-size: 100%;
+  /* Crop the image itself; the shared item never owns a corner radius. */
+  clip-path: circle(50%);
+  object-fit: cover;
 }
 
 .settings-document-item__copy,

@@ -3,6 +3,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { atomicWriteBuffer } = require('./atomicWrite');
+const { isAllowedChannelAvatarUrl } = require('./artists/channelAvatar');
 const { requireCondition } = require('./youtubeDesktopAuthorization');
 
 const VIDEO_ID = /^[a-zA-Z0-9_-]{11}$/u;
@@ -13,6 +14,9 @@ const FILE_LIMIT = 2_000_000;
 const VIDEO_LIMIT = 5000;
 const AUTHORIZED_DATA_MAX_AGE = 30 * 24 * 60 * 60 * 1000;
 const TWITCH_METADATA_MAX_AGE = 24 * 60 * 60 * 1000;
+const PLAYLIST_ID = /^[A-Za-z0-9_-]{1,150}$/u;
+const MAX_YOUTUBE_PAGES = 10;
+const YOUTUBE_PAGE_BUDGET_MS = 20_000;
 
 function authorizedDataIsCurrent(checkedAt) {
   return (
@@ -85,6 +89,22 @@ function boundedVideoTitle(value) {
   return Array.from(title).slice(0, 1024).join('');
 }
 
+function channelAvatar(value) {
+  if (
+    typeof value !== 'string' ||
+    value.length > 2048 ||
+    !isAllowedChannelAvatarUrl(value)
+  )
+    return null;
+  const url = new URL(value);
+  return url.username || url.password || url.port ? null : value;
+}
+
+function channelHandle(value) {
+  const handle = boundedText(value);
+  return /^@[^\s/]{1,100}$/u.test(handle) ? handle : null;
+}
+
 function createSessionPlatformVideos({
   directory,
   safeStorage,
@@ -115,7 +135,7 @@ function createSessionPlatformVideos({
           typeof data.refreshToken === 'string' &&
           data.refreshToken.length > 0 &&
           data.refreshToken.length <= 4096,
-        'failed',
+        'secureStorage',
       );
       return data;
     });
@@ -140,8 +160,17 @@ function createSessionPlatformVideos({
       configured: youtube.configured,
       secure,
       needsReset,
+      savedAt: account?.checkedAt ?? null,
+      retainedUntil: account
+        ? account.checkedAt + AUTHORIZED_DATA_MAX_AGE
+        : null,
       channel: account
-        ? { id: account.channelId, name: boundedText(account.channelName) }
+        ? {
+            id: account.channelId,
+            name: boundedText(account.channelName),
+            handle: channelHandle(account.channelHandle),
+            avatarUrl: channelAvatar(account.avatarUrl),
+          }
         : null,
     };
   }
@@ -191,6 +220,22 @@ function createSessionPlatformVideos({
     refresh = null;
   }
 
+  function saveChannelAccount({ channelId, refreshToken, checkedAt }, snippet) {
+    atomicWriteBuffer(
+      accountFile,
+      safeStorage.encryptString(
+        JSON.stringify({
+          channelId,
+          refreshToken,
+          checkedAt,
+          channelName: boundedText(snippet?.title),
+          channelHandle: channelHandle(snippet?.customUrl),
+          avatarUrl: channelAvatar(snippet?.thumbnails?.default?.url),
+        }),
+      ),
+    );
+  }
+
   async function connect() {
     requireCondition(youtube.configured, 'notConfigured');
     requireCondition(safeStorage.isEncryptionAvailable(), 'secureStorage');
@@ -214,16 +259,13 @@ function createSessionPlatformVideos({
           CHANNEL_ID.test(channel?.id ?? ''),
         'wrongChannel',
       );
-      atomicWriteBuffer(
-        accountFile,
-        safeStorage.encryptString(
-          JSON.stringify({
-            channelId: channel.id,
-            channelName: boundedText(channel.snippet?.title),
-            refreshToken: token.refreshToken,
-            checkedAt: Date.now(),
-          }),
-        ),
+      saveChannelAccount(
+        {
+          channelId: channel.id,
+          refreshToken: token.refreshToken,
+          checkedAt: Date.now(),
+        },
+        channel.snippet,
       );
       epoch++;
       access = { accessToken: token.accessToken, expiresAt: token.expiresAt };
@@ -298,6 +340,115 @@ function createSessionPlatformVideos({
     }
   }
 
+  async function refreshChannel() {
+    const account = readAccount();
+    const revision = epoch;
+    const result = await authorizedGet(account, 'channels', {
+      part: 'id,snippet',
+      id: account?.channelId,
+    });
+    requireCondition(epoch === revision, 'authRequired');
+    const channel = result.items?.find((item) => item.id === account.channelId);
+    requireCondition(channel, 'wrongChannel');
+    saveChannelAccount(account, channel.snippet);
+    return status();
+  }
+
+  async function youtubePages(account, resource, fields) {
+    const revision = epoch;
+    const deadline = Date.now() + YOUTUBE_PAGE_BUDGET_MS;
+    const items = [];
+    const seen = new Set();
+    let pageToken;
+    for (let page = 0; page < MAX_YOUTUBE_PAGES; page++) {
+      const result = await authorizedGet(account, resource, {
+        ...fields,
+        maxResults: '50',
+        ...(pageToken ? { pageToken } : {}),
+      });
+      const entries = result.items ?? [];
+      requireCondition(
+        Array.isArray(entries) && entries.length <= 50,
+        'unavailable',
+      );
+      items.push(...entries);
+      pageToken = result.nextPageToken;
+      if (!pageToken) break;
+      requireCondition(
+        typeof pageToken === 'string' &&
+          pageToken.length <= 1024 &&
+          !seen.has(pageToken),
+        'unavailable',
+      );
+      seen.add(pageToken);
+      if (Date.now() >= deadline) break;
+    }
+    return { items, truncated: Boolean(pageToken), revision };
+  }
+
+  function assertPlaylistAuthorization(revision) {
+    requireCondition(youtube.configured, 'notConfigured');
+    const account = readAccount();
+    requireCondition(account && revision === epoch, 'authRequired');
+    return account;
+  }
+
+  async function listYoutubePlaylists() {
+    const account = readAccount();
+    const { items, truncated, revision } = await youtubePages(
+      account,
+      'playlists',
+      {
+        part: 'id,snippet',
+        mine: 'true',
+        fields: 'nextPageToken,items(id,snippet(channelId,title))',
+      },
+    );
+    return {
+      revision,
+      truncated,
+      entries: items.flatMap((item) =>
+        typeof item?.id === 'string' &&
+        PLAYLIST_ID.test(item.id) &&
+        item.snippet?.channelId === account.channelId
+          ? [{ id: item.id, name: boundedText(item.snippet.title) }]
+          : [],
+      ),
+    };
+  }
+
+  async function readYoutubePlaylist(id, revision) {
+    const account = assertPlaylistAuthorization(revision);
+    requireCondition(
+      typeof id === 'string' && PLAYLIST_ID.test(id),
+      'unavailable',
+    );
+    const { items, truncated } = await youtubePages(account, 'playlistItems', {
+      part: 'snippet,contentDetails,status',
+      playlistId: id,
+      fields:
+        'nextPageToken,items(contentDetails(videoId),snippet(title,videoOwnerChannelTitle),status(privacyStatus))',
+    });
+    assertPlaylistAuthorization(revision);
+    return {
+      truncated,
+      tracks: items.map((item) => {
+        const id = item?.contentDetails?.videoId;
+        const videoId = typeof id === 'string' && VIDEO_ID.test(id) ? id : '';
+        return {
+          videoId,
+          title: boundedVideoTitle(item?.snippet?.title),
+          artist: boundedText(item?.snippet?.videoOwnerChannelTitle),
+          unavailable:
+            !videoId ||
+            ['deleted', 'privacyStatusUnspecified'].includes(
+              item?.status?.privacyStatus,
+            ),
+        };
+      }),
+    };
+  }
+
   function sessionPairs(sessionId) {
     const pairs = readPairs().filter((pair) => pair.sessionId === sessionId);
     const account = pairs.some(({ channelId }) => channelId)
@@ -324,21 +475,20 @@ function createSessionPlatformVideos({
 
   async function candidates(startedAt) {
     const account = readAccount();
-    const result = await authorizedGet(account, 'liveBroadcasts', {
+    const { items } = await youtubePages(account, 'liveBroadcasts', {
       part: 'id,snippet,status',
       mine: 'true',
-      maxResults: '50',
       broadcastType: 'all',
     });
     const start = Date.parse(startedAt ?? '');
-    return (result.items ?? [])
+    return items
       .filter(
         (item) =>
+          typeof item?.id === 'string' &&
           VIDEO_ID.test(item.id) &&
           item.snippet?.channelId === account.channelId &&
           item.status?.lifeCycleStatus === 'complete',
       )
-      .slice(0, 50)
       .map((item) => ({
         videoId: item.id,
         title: boundedVideoTitle(item.snippet.title),
@@ -353,7 +503,8 @@ function createSessionPlatformVideos({
               : Infinity) -
             (b.startedAt ? Math.abs(Date.parse(b.startedAt) - start) : Infinity)
           : Date.parse(b.startedAt ?? 0) - Date.parse(a.startedAt ?? 0),
-      );
+      )
+      .slice(0, 50);
   }
 
   async function save(
@@ -375,39 +526,37 @@ function createSessionPlatformVideos({
     const pair = { sessionId, platform, videoId };
     if (platform === 'twitch') {
       Object.assign(pair, await twitchMetadata(videoId));
-    } else {
+    } else if (fromCandidate) {
       const account = readAccount();
-      if (fromCandidate) requireCondition(account, 'authRequired');
-      if (account) {
-        const result = await authorizedGet(account, 'videos', {
-          part: 'id,snippet,contentDetails,liveStreamingDetails',
-          id: videoId,
-        });
-        const video = result.items?.find((item) => item.id === videoId);
-        requireCondition(video, 'unavailable');
-        requireCondition(
-          video.snippet?.channelId === account.channelId,
-          'wrongChannel',
-        );
-        pair.channelId = account.channelId;
-        const duration = /^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/u.exec(
-          video.contentDetails?.duration,
-        );
-        Object.assign(
-          pair,
-          metadataFields({
-            title: video.snippet.title,
-            channelName: video.snippet.channelTitle,
-            videoDate: video.liveStreamingDetails?.actualStartTime,
-            durationSeconds:
-              duration &&
-              Number(duration[1] ?? 0) * 3600 +
-                Number(duration[2] ?? 0) * 60 +
-                Number(duration[3] ?? 0),
-          }),
-        );
-        pair.checkedAt = Date.now();
-      }
+      requireCondition(account, 'authRequired');
+      const result = await authorizedGet(account, 'videos', {
+        part: 'id,snippet,contentDetails,liveStreamingDetails',
+        id: videoId,
+      });
+      const video = result.items?.find((item) => item.id === videoId);
+      requireCondition(video, 'unavailable');
+      requireCondition(
+        video.snippet?.channelId === account.channelId,
+        'wrongChannel',
+      );
+      pair.channelId = account.channelId;
+      const duration = /^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/u.exec(
+        video.contentDetails?.duration,
+      );
+      Object.assign(
+        pair,
+        metadataFields({
+          title: video.snippet.title,
+          channelName: video.snippet.channelTitle,
+          videoDate: video.liveStreamingDetails?.actualStartTime,
+          durationSeconds:
+            duration &&
+            Number(duration[1] ?? 0) * 3600 +
+              Number(duration[2] ?? 0) * 60 +
+              Number(duration[3] ?? 0),
+        }),
+      );
+      pair.checkedAt = Date.now();
     }
     verifySession();
     requireCondition(!pair.channelId || epoch === revision, 'authRequired');
@@ -476,8 +625,12 @@ function createSessionPlatformVideos({
     connect,
     cancel,
     disconnect,
+    refreshChannel,
     sessionPairs,
     candidates,
+    listYoutubePlaylists,
+    readYoutubePlaylist,
+    assertPlaylistAuthorization,
     save,
     remove,
     open,

@@ -66,9 +66,8 @@ metadata must not become the final timing authority.
   re-resolve the selected id through the existing yt-dlp metadata phase; metadata
   read from the downloaded sidecar, including duration, is authoritative for
   library indexing and optional lyrics acquisition.
-- Recognize Spotify and Apple Music URLs only as deferred provider inputs. No
-  metadata fetch, redirect traversal, account access, or conversion is performed
-  until a separate adapter decision is accepted.
+- Recognize Spotify and Apple Music URLs as deferred inputs in the discovery
+  field. Spotify playlists use the explicit account playlist import workflow.
 
 ## Rejected for this phase
 
@@ -94,9 +93,10 @@ provider snapshots and therefore only weak ranking evidence, not identity or
 availability guarantees. Candidate duration is provisional; downloaded metadata
 is the stable local reference. System-browser exploration adds
 no Electron cookie／account boundary and has no access to the browser result;
-paste-back remains an explicit operator action. Account playlists and cross-platform
-track mapping remain separate future capabilities with their own authentication,
-terms, and failure boundaries.
+paste-back remains an explicit operator action. [Account playlist import](../contracts/account-playlist-import.md)
+uses separate authentication, terms, and failure boundaries. A source playlist
+provides recording metadata for local matching. Media acquisition uses an
+explicitly selected and confirmed provider candidate.
 
 The artist-photo exception inherits private-schema drift and rate-limit risk.
 It therefore remains candidate-first: normalized images are downloaded and

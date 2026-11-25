@@ -70,12 +70,25 @@ describe('filterLoginCookies', () => {
 describe('createYoutubeLoginStore', () => {
   it('imports encrypted, reports status and removes', () => {
     const login = store();
-    expect(login.getStatus()).toEqual({ imported: false });
-    expect(login.importFile(writeSource(COOKIES))).toEqual({ imported: true });
+    expect(login.getStatus()).toEqual({
+      imported: false,
+      secure: true,
+      savedAt: null,
+    });
+    expect(login.importFile(writeSource(COOKIES))).toEqual({
+      imported: true,
+      secure: true,
+      savedAt: expect.any(Number),
+    });
+    expect(store().getStatus()).toEqual(login.getStatus());
     const saved = fs.readFileSync(path.join(dir, 'state', 'youtube-login.bin'));
     expect(saved.toString('utf8').startsWith('enc:')).toBe(true);
     expect(saved.toString('utf8')).not.toContain('example.com');
-    expect(login.remove()).toEqual({ imported: false });
+    expect(login.remove()).toEqual({
+      imported: false,
+      secure: true,
+      savedAt: null,
+    });
   });
 
   it('keeps the previous file when an import is rejected', () => {
@@ -84,7 +97,7 @@ describe('createYoutubeLoginStore', () => {
     expect(() => login.importFile(writeSource('not cookies'))).toThrow(
       LOGIN_FILE_ERRORS.FORMAT,
     );
-    expect(login.getStatus()).toEqual({ imported: true });
+    expect(login.getStatus()).toMatchObject({ imported: true });
   });
 
   it('refuses to store without OS encryption', () => {

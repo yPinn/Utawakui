@@ -258,16 +258,18 @@ function buildCandidate(candidate, context) {
 }
 
 async function resolveYoutubeSearchQuery(query, options) {
+  const recording = options.recording;
   const canonical = {
-    title: normalizeText(query),
-    artist: '',
-    duration: undefined,
+    title: normalizeText(recording?.title ?? query),
+    artist: normalizeText(recording?.artist),
+    duration: recording?.duration,
+    ...(recording ? { album: recording.album, isrc: recording.isrc } : {}),
     sourcePlatform: 'youtube',
     sourceType: 'query',
   };
   const playbackCandidates = await options.searchPlaybackCandidates(
     canonical,
-    {},
+    recording ?? {},
     { sourcePlatform: 'youtube' },
   );
   const existingIds =
@@ -278,7 +280,7 @@ async function resolveYoutubeSearchQuery(query, options) {
     input: canonical.title,
     sourceVideoId: null,
     canonicalTitle: canonical.title,
-    canonicalArtist: '',
+    canonicalArtist: canonical.artist,
     canonicalRecording: canonical,
     existingIds,
   };

@@ -9,7 +9,7 @@ const items = [
   { value: 'file', label: '用登入檔案' },
 ];
 
-function render(overrides = {}) {
+function render(overrides = {}, featureEnabled = true) {
   const login = {
     source: 'none',
     loaded: true,
@@ -24,7 +24,9 @@ function render(overrides = {}) {
     ...overrides,
   };
   return renderToString(
-    createSSRApp({ render: () => h(YoutubeLoginRow, { login }) }),
+    createSSRApp({
+      render: () => h(YoutubeLoginRow, { login, featureEnabled }),
+    }),
   );
 }
 
@@ -64,5 +66,19 @@ describe('YoutubeLoginRow', () => {
       fileError: '檔案裡沒有 YouTube 的登入資料。',
     });
     expect(html).toContain('檔案裡沒有 YouTube 的登入資料。');
+  });
+
+  it('shows the retained encrypted file and lets users remove it when downloads are disabled', async () => {
+    const html = await render(
+      {
+        source: 'none',
+        status: { imported: true, secure: true, savedAt: 1_700_000_000_000 },
+      },
+      false,
+    );
+    expect(html).toContain('登入檔案已保留');
+    expect(html).toContain('加密檔案更新於');
+    expect(html).toContain('移除');
+    expect(html).not.toContain('匯入檔案');
   });
 });

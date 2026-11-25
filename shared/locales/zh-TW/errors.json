@@ -1,4 +1,24 @@
 {
+  "PLAYLIST_IMPORT_FAILED": {
+    "title": "播放清單匯入未完成",
+    "message": "無法匯入播放清單，請再試一次。"
+  },
+  "PLAYLIST_IMPORT_STALE": {
+    "title": "匯入預覽已失效",
+    "message": "播放清單或曲庫已變更，請重新讀取後預覽。"
+  },
+  "PLAYLIST_IMPORT_FILE": {
+    "title": "無法讀取播放清單檔案",
+    "message": "請選擇 8 MiB 內的播放清單 CSV 或 Spotify 播放清單 JSON。"
+  },
+  "PLAYLIST_IMPORT_SELECTION": {
+    "title": "無法使用選取結果",
+    "message": "請輸入播放清單名稱，並從預覽選擇至少一首本機曲目。"
+  },
+  "PLAYLIST_IMPORT_LIMIT": {
+    "title": "曲庫播放清單已達上限",
+    "message": "曲庫沒有空間新增播放清單。"
+  },
   "TRACK_GAIN_FAILED": {
     "title": "本首音量未完成",
     "message": "無法處理本首音量，請再試一次。"
@@ -687,5 +707,45 @@
   "PLAYLIST_FOLDER_UPDATE_FAILED": {
     "title": "資料夾無法更新",
     "message": "這個資料夾無法更新，請再試一次。"
+  },
+  "PLAYLIST_IMPORT_SPOTIFY_NOT_CONFIGURED": {
+    "title": "Spotify 讀取未設定",
+    "message": "此版本尚未設定 Spotify 帳號連線。"
+  },
+  "PLAYLIST_IMPORT_SPOTIFY_LINK": {
+    "title": "無法讀取播放清單連結",
+    "message": "請貼上完整的 Spotify 播放清單網址。短連結可先在瀏覽器開啟。"
+  },
+  "PLAYLIST_IMPORT_SPOTIFY_ACCESS": {
+    "title": "Spotify 清單無法讀取",
+    "message": "請確認已授權的帳號擁有這份清單或參與協作。"
+  },
+  "PLAYLIST_IMPORT_SPOTIFY_UNAVAILABLE": {
+    "title": "Spotify 暫無法讀取",
+    "message": "目前無法讀取 Spotify 播放清單，請稍後重試。"
+  },
+  "PLAYLIST_IMPORT_SPOTIFY_RATE": {
+    "title": "Spotify 暫時限制查詢",
+    "message": "請等一下，再讀取 Spotify 播放清單。"
+  },
+  "PLAYLIST_IMPORT_SPOTIFY_TIMEOUT": {
+    "title": "Spotify 授權逾時",
+    "message": "請重新發起授權並在瀏覽器完成操作。"
+  },
+  "PLAYLIST_IMPORT_SPOTIFY_RECONNECT": {
+    "title": "Spotify 需要重新綁定",
+    "message": "此 Spotify 授權已無法使用。請到設定重新綁定，或再次使用逐次授權匯入。"
+  },
+  "PLAYLIST_IMPORT_SPOTIFY_BIND_FAILED": {
+    "title": "無法綁定 Spotify",
+    "message": "未能完成 Spotify 綁定。請確認已在瀏覽器允許唯讀存取，再試一次。"
+  },
+  "PLAYLIST_IMPORT_BATCH_LIMIT": {
+    "title": "匯入批次已達上限",
+    "message": "處理或清除既有匯入批次後再試。"
+  },
+  "PLAYLIST_IMPORT_BATCH_CHANGED": {
+    "title": "本機播放清單已變更",
+    "message": "這份播放清單的曲序或曲目已變更，請在曲庫整理後續下載的曲目。"
   }
 }

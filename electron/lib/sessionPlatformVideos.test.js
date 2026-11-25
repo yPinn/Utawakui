@@ -10,6 +10,7 @@ import { PlatformVideoError } from './youtubeDesktopAuthorization.js';
 import { registerSessionPlatformVideoHandlers } from '../main/sessionPlatformVideoHandlers.js';
 
 const channelId = `UC${'a'.repeat(22)}`;
+const avatarUrl = 'https://yt3.googleusercontent.com/channel-photo';
 const videoId = 'abcdefghijk';
 const longTitle = `直播回放 ${'演出場次'.repeat(55)} 👩‍🎤`;
 let directory;
@@ -34,7 +35,18 @@ function setup(configured = true, getTwitchVod) {
       actualStartTime: '2026-10-21T12:00:00Z',
     };
     if (resource === 'channels')
-      return { items: [{ id: channelId, snippet: { title: 'Show' } }] };
+      return {
+        items: [
+          {
+            id: channelId,
+            snippet: {
+              title: 'Show',
+              customUrl: '@show',
+              thumbnails: { default: { url: avatarUrl } },
+            },
+          },
+        ],
+      };
     if (resource === 'liveBroadcasts')
       return {
         items: [
@@ -68,6 +80,83 @@ function setup(configured = true, getTwitchVod) {
 }
 
 describe('session platform video pairing', () => {
+  it('reads authorized playlists and ordered items without changing the video grants', async () => {
+    const { service, youtube } = setup();
+    await service.connect();
+    youtube.get
+      .mockResolvedValueOnce({
+        items: [{ id: 'PL_owned', snippet: { channelId, title: 'Own mix' } }],
+        nextPageToken: 'next',
+      })
+      .mockResolvedValueOnce({
+        items: [
+          { id: 'PL_other', snippet: { channelId: 'other', title: 'Other' } },
+        ],
+      })
+      .mockResolvedValueOnce({
+        items: [{ contentDetails: { videoId }, snippet: { title: 'First' } }],
+        nextPageToken: 'more',
+      })
+      .mockResolvedValueOnce({
+        items: [{ contentDetails: { videoId }, snippet: { title: 'Again' } }],
+      });
+    const lists = await service.listYoutubePlaylists();
+    expect(lists.entries).toEqual([{ id: 'PL_owned', name: 'Own mix' }]);
+    expect(
+      await service.readYoutubePlaylist('PL_owned', lists.revision),
+    ).toMatchObject({
+      truncated: false,
+      tracks: [
+        { videoId, title: 'First' },
+        { videoId, title: 'Again' },
+      ],
+    });
+    expect(youtube.get).toHaveBeenCalledWith(
+      'playlists',
+      expect.objectContaining({ mine: 'true', pageToken: 'next' }),
+      'test-access',
+    );
+    await service.disconnect();
+    await expect(
+      service.readYoutubePlaylist('PL_owned', lists.revision),
+    ).rejects.toMatchObject({ code: 'authRequired' });
+  });
+
+  it('ranks older broadcasts by the archived session time and keeps manual links available', async () => {
+    const { service, youtube } = setup();
+    await service.connect();
+    const broadcast = (id, actualStartTime) => ({
+      id,
+      snippet: { channelId, title: id, actualStartTime },
+      status: { lifeCycleStatus: 'complete' },
+    });
+    youtube.get
+      .mockResolvedValueOnce({
+        items: [broadcast('later000000', '2026-11-20T01:00:00Z')],
+        nextPageToken: 'next',
+      })
+      .mockResolvedValueOnce({
+        items: [broadcast(videoId, '2026-10-20T00:00:00Z')],
+      });
+    const results = await service.candidates('2026-10-20T00:01:00Z');
+    expect(results.map((entry) => entry.videoId)).toEqual([
+      videoId,
+      'later000000',
+    ]);
+    youtube.get.mockClear();
+    await service.save(
+      'one',
+      'youtube',
+      { url: `https://youtu.be/${videoId}` },
+      () => {},
+    );
+    expect(youtube.get).not.toHaveBeenCalled();
+    await service.disconnect();
+    expect(service.sessionPairs('one')).toMatchObject([
+      { platform: 'youtube', verified: false, videoId },
+    ]);
+  });
+
   it.each([
     ['twitch', 'https://twitch.tv/videos/123?t=10s', '123'],
     ['twitch', 'https://twitch.tv.evil.example/videos/123', null],
@@ -143,7 +232,21 @@ describe('session platform video pairing', () => {
   it('verifies the selected YouTube channel and cleans verified links on disconnect', async () => {
     const { service, youtube } = setup();
     const status = await service.connect();
-    expect(status.channel).toEqual({ id: channelId, name: 'Show' });
+    expect(status.channel).toEqual({
+      id: channelId,
+      name: 'Show',
+      handle: '@show',
+      avatarUrl,
+    });
+    expect(status.savedAt).toBeGreaterThan(0);
+    expect(status.retainedUntil - status.savedAt).toBe(
+      30 * 24 * 60 * 60 * 1000,
+    );
+    expect(setup().service.status()).toMatchObject({
+      savedAt: status.savedAt,
+      retainedUntil: status.retainedUntil,
+      channel: status.channel,
+    });
     expect(JSON.stringify(status)).not.toContain('test-refresh');
     expect(await service.candidates('2026-10-21')).toMatchObject([
       { videoId, title: longTitle },
@@ -165,12 +268,40 @@ describe('session platform video pairing', () => {
     await expect(
       service.save('one', 'youtube', { candidateId: videoId }, () => {}),
     ).rejects.toMatchObject({ code: 'wrongChannel' });
-    expect((await service.disconnect()).revoked).toBe(true);
+    expect(await service.disconnect()).toMatchObject({
+      revoked: true,
+      channel: null,
+      savedAt: null,
+      retainedUntil: null,
+    });
     expect(youtube.revoke).toHaveBeenCalledWith('test-refresh');
     expect(service.sessionPairs('one')).toMatchObject([{ platform: 'twitch' }]);
     expect(
       fs.existsSync(path.join(directory, 'youtube-desktop-account.bin')),
     ).toBe(false);
+  });
+
+  it('refreshes profile details without extending an existing authorization', async () => {
+    const { service, youtube } = setup();
+    const original = await service.connect();
+    youtube.get.mockResolvedValueOnce({
+      items: [
+        {
+          id: channelId,
+          snippet: {
+            title: 'Renamed show',
+            customUrl: '@renamed',
+            thumbnails: { default: { url: 'https://untrusted.test/avatar' } },
+          },
+        },
+      ],
+    });
+    expect(await service.refreshChannel()).toMatchObject({
+      savedAt: original.savedAt,
+      retainedUntil: original.retainedUntil,
+      channel: { name: 'Renamed show', handle: '@renamed', avatarUrl: null },
+    });
+    expect(youtube.authorize).toHaveBeenCalledOnce();
   });
 
   it('cannot recreate a verified link from a response that arrives after disconnect', async () => {

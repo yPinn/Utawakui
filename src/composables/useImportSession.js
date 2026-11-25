@@ -152,6 +152,7 @@ function handleProviderSetupError(err) {
   const appError = normalizeAppError(err, {
     source: 'import',
     operation: 'provider-tool',
+    context: err?.context,
   });
   if (appError.code !== 'FEATURE_DEPENDENCY_MISSING') return false;
   const notice = recordError(err, {
@@ -391,6 +392,8 @@ export function useImportSession() {
     activity: importExecution.activity,
     currentBatchId: computed(importExecution.currentBatchId),
     submitImport: importExecution.submitImport,
+    submitReviewedPlaylist: importExecution.submitReviewedPlaylist,
+    findReviewedPlaylistTrack: importExecution.findReviewedPlaylistTrack,
     cancelBatch: importExecution.cancelBatch,
     retryBatch: importExecution.retryBatch,
     dismissBatch: importExecution.dismissBatch,

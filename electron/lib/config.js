@@ -104,6 +104,7 @@ const DEFAULTS = {
   youtubeLoginSource: 'none',
   // Notice version the user accepted before the first sign-in file import.
   youtubeLoginNoticeVersion: null,
+  spotifyPlaylistAuthorizedAt: null,
   // ADR 0029: ask before the first severe-error report, then remember.
   autoErrorReporting: 'ask',
   experimentalLyricsAfterSeparation: false,
@@ -431,6 +432,12 @@ function loadConfigSnapshot(configPath) {
         data.youtubeLoginNoticeVersion.length <= 64
           ? data.youtubeLoginNoticeVersion
           : DEFAULTS.youtubeLoginNoticeVersion,
+      spotifyPlaylistAuthorizedAt:
+        Number.isSafeInteger(data.spotifyPlaylistAuthorizedAt) &&
+        data.spotifyPlaylistAuthorizedAt > 0 &&
+        data.spotifyPlaylistAuthorizedAt <= Date.now()
+          ? data.spotifyPlaylistAuthorizedAt
+          : DEFAULTS.spotifyPlaylistAuthorizedAt,
       autoErrorReporting: AUTO_ERROR_REPORTING_VALUES.has(
         data.autoErrorReporting,
       )

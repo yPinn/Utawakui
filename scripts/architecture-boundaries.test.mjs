@@ -224,7 +224,8 @@ describe('architecture ownership boundaries', () => {
     );
     const execution = read('src/composables/import/useImportExecution.js');
 
-    expect(facade.split(/\r?\n/u).length).toBeLessThan(430);
+    // Grows only by forwarding exports; workflow logic belongs in the import modules.
+    expect(facade.split(/\r?\n/u).length).toBeLessThan(440);
     expect(facade).toContain("from './import/useImportSourceResolution.js'");
     expect(facade).toContain("from './import/useImportExecution.js'");
     expect(facade).not.toContain('markRaw');

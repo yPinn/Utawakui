@@ -753,7 +753,10 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('shell:open-external', targetId),
   openYoutubeMusicSearch: (query) =>
     ipcRenderer.invoke('provider-discovery:open-youtube-music-search', query),
-  downloadAudio: (videoId) => ipcRenderer.invoke('yt:download-audio', videoId),
+  downloadAudio: (videoId, libraryEpoch) =>
+    libraryEpoch === undefined
+      ? ipcRenderer.invoke('yt:download-audio', videoId)
+      : ipcRenderer.invoke('yt:download-audio', videoId, libraryEpoch),
   cancelAudioDownload: (videoId) =>
     ipcRenderer.invoke('yt:cancel-download', videoId),
   // YouTube playlist URL/ID resolution — distinct from the user-named
@@ -1744,6 +1747,41 @@ contextBridge.exposeInMainWorld('Utawakui', {
       ipcRenderer.removeListener('library:release-metadata-progress', listener);
   },
   createPlaylist: (name) => ipcRenderer.invoke('playlists:create', name),
+  chooseSpotifyPlaylistFile: () =>
+    ipcRenderer.invoke('playlist-import:choose-spotify'),
+  listYoutubeAccountPlaylists: () =>
+    ipcRenderer.invoke('playlist-import:list-youtube'),
+  previewPlaylistImport: ({ id, entryId }) =>
+    ipcRenderer.invoke('playlist-import:preview', { id, entryId }),
+  savePlaylistImport: ({ id, token, name, selections }) =>
+    ipcRenderer.invoke('playlist-import:save', { id, token, name, selections }),
+  clearPlaylistImport: (id) => ipcRenderer.invoke('playlist-import:clear', id),
+  getSpotifyPlaylistImportStatus: () =>
+    ipcRenderer.invoke('playlist-import:spotify-status'),
+  clearSpotifyPlaylistProfile: () =>
+    ipcRenderer.invoke('playlist-import:clear-spotify-profile'),
+  bindSpotifyAccount: () => ipcRenderer.invoke('playlist-import:bind-spotify'),
+  cancelSpotifyBinding: () =>
+    ipcRenderer.invoke('playlist-import:cancel-spotify-bind'),
+  unbindSpotifyAccount: () =>
+    ipcRenderer.invoke('playlist-import:unbind-spotify'),
+  readSpotifyPlaylistLink: (input) =>
+    ipcRenderer.invoke('playlist-import:spotify-link', input),
+  cancelSpotifyPlaylistRead: () =>
+    ipcRenderer.invoke('playlist-import:cancel-spotify'),
+  findPlaylistImportTrack: ({ id, token, index }) =>
+    ipcRenderer.invoke('playlist-import:find', { id, token, index }),
+  acceptPlaylistImportBatch: ({ id, token, name, selections }) =>
+    ipcRenderer.invoke('playlist-import:accept', {
+      id,
+      token,
+      name,
+      selections,
+    }),
+  finalizePlaylistImportBatch: (id) =>
+    ipcRenderer.invoke('playlist-import:finalize', id),
+  releasePlaylistImportBatch: (id) =>
+    ipcRenderer.invoke('playlist-import:release', id),
   renamePlaylist: (id, name) =>
     ipcRenderer.invoke('playlists:rename', id, name),
   deletePlaylist: (id) => ipcRenderer.invoke('playlists:delete', id),
@@ -1795,6 +1833,8 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ),
   getPlatformVideoAccount: () =>
     ipcRenderer.invoke('session-platform-video:status'),
+  refreshPlatformVideoChannel: () =>
+    ipcRenderer.invoke('session-platform-video:refresh-channel'),
   connectPlatformVideoAccount: () =>
     ipcRenderer.invoke('session-platform-video:connect'),
   cancelPlatformVideoAccount: () =>

@@ -6,6 +6,7 @@ const playlists = vi.hoisted(() => ({
   create: vi.fn(),
   setTracks: vi.fn(),
   upsertAlbum: vi.fn(),
+  refresh: vi.fn(async () => {}),
 }));
 vi.mock('../usePlaylists.js', () => ({ usePlaylists: () => playlists }));
 
@@ -19,6 +20,56 @@ beforeEach(() => {
       cancelAudioDownload: vi.fn().mockResolvedValue(true),
     },
   });
+});
+
+it('keeps reviewed playlist downloads scoped and retries only the failed source', async () => {
+  const h = fixture();
+  const plan = {
+    id: 'main-plan',
+    title: 'Shared playlist',
+    libraryEpoch: 19,
+    tracks: [
+      { id: 'local', title: 'Local', alreadyDownloaded: true },
+      { id: 'first', title: 'First' },
+      { id: 'second', title: 'Second' },
+    ],
+  };
+  const api = window.Utawakui;
+  api.acceptPlaylistImportBatch = vi.fn(async () => ({
+    ok: true,
+    value: plan,
+  }));
+  api.finalizePlaylistImportBatch = vi.fn(async () => ({
+    ok: true,
+    value: { playlistId: 'saved' },
+  }));
+  api.releasePlaylistImportBatch = vi.fn(async () => {});
+  api.downloadAudio.mockRejectedValueOnce(new Error('failed'));
+  const { value: id } = await h.execution.submitReviewedPlaylist({
+    id: 'review',
+  });
+  await vi.waitFor(() =>
+    expect(h.execution.activity.batches[0].phase).toBe('failed'),
+  );
+  expect(
+    h.execution.activity.batches[0].tracks.map((track) => track.id),
+  ).toEqual(['local', 'first', 'second']);
+  expect(api.downloadAudio.mock.calls).toEqual([
+    ['first', 19],
+    ['second', 19],
+  ]);
+  await expect(h.execution.retryBatch(id)).resolves.toBe(true);
+  expect(api.downloadAudio.mock.calls).toEqual([
+    ['first', 19],
+    ['second', 19],
+    ['first', 19],
+  ]);
+  expect(api.finalizePlaylistImportBatch.mock.calls).toEqual([
+    ['main-plan'],
+    ['main-plan'],
+  ]);
+  h.execution.clearCompletedBatches();
+  expect(api.releasePlaylistImportBatch).toHaveBeenCalledWith('main-plan');
 });
 afterEach(() => vi.unstubAllGlobals());
 

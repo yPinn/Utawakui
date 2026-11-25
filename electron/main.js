@@ -239,6 +239,10 @@ const { createLibraryStorageService } = require('./lib/library/storage');
 const { registerMediaProtocol } = require('./main/mediaProtocol');
 const { registerPlaylistsHandlers } = require('./main/playlistsHandlers');
 const {
+  registerPlaylistImportHandlers,
+} = require('./main/playlistImportHandlers');
+const { createSpotifyPlaylistReader } = require('./lib/spotifyPlaylistReader');
+const {
   registerLibraryMetadataHandlers,
 } = require('./main/libraryMetadataHandlers');
 const { createReconciliationService } = require('./lib/reconciliation/runtime');
@@ -1785,6 +1789,21 @@ if (!gotSingleInstanceLock) {
       recordDiagnostic,
     });
 
+    const platformVideos = createSessionPlatformVideos({
+      directory: app.getPath('userData'),
+      safeStorage,
+      openExternal: (url) => shell.openExternal(url),
+      getTwitchVod: createTwitchVodMetadata({
+        clientId: process.env.UTAWAKUI_TWITCH_CLIENT_ID,
+        accessToken: process.env.UTAWAKUI_TWITCH_APP_ACCESS_TOKEN,
+      }),
+      youtube: createYoutubeDesktopAuthorization({
+        clientId: process.env.UTAWAKUI_YOUTUBE_OAUTH_CLIENT_ID,
+        clientSecret: process.env.UTAWAKUI_YOUTUBE_OAUTH_CLIENT_SECRET,
+        openExternal: (url) => shell.openExternal(url),
+        t,
+      }),
+    });
     registerPerformanceSessionPlanHandlers({
       ipcMain,
       dialog,
@@ -1795,21 +1814,7 @@ if (!gotSingleInstanceLock) {
       sessionHistoryService,
       getReleaseScope,
       withPlayableRelease: releaseOrganizationRuntime.withPlayableCollection,
-      platformVideos: createSessionPlatformVideos({
-        directory: app.getPath('userData'),
-        safeStorage,
-        openExternal: (url) => shell.openExternal(url),
-        getTwitchVod: createTwitchVodMetadata({
-          clientId: process.env.UTAWAKUI_TWITCH_CLIENT_ID,
-          accessToken: process.env.UTAWAKUI_TWITCH_APP_ACCESS_TOKEN,
-        }),
-        youtube: createYoutubeDesktopAuthorization({
-          clientId: process.env.UTAWAKUI_YOUTUBE_OAUTH_CLIENT_ID,
-          clientSecret: process.env.UTAWAKUI_YOUTUBE_OAUTH_CLIENT_SECRET,
-          openExternal: (url) => shell.openExternal(url),
-          t,
-        }),
-      }),
+      platformVideos,
     });
 
     registerBgmStandbyPlanHandlers({
@@ -1862,6 +1867,43 @@ if (!gotSingleInstanceLock) {
     });
 
     app.once('before-quit', () => importHandlerRuntime.dispose());
+    registerPlaylistImportHandlers({
+      ipcMain,
+      dialog,
+      getMainWindow: windowState.getMainWindow,
+      getLibraryScope: getReleaseScope,
+      listLibraryTracks: libraryTrackSnapshot.listFresh,
+      platformVideos,
+      getSpotifyAuthorizedAt: () =>
+        configState.getConfig().spotifyPlaylistAuthorizedAt,
+      spotify: createSpotifyPlaylistReader({
+        clientId: process.env.UTAWAKUI_SPOTIFY_CLIENT_ID,
+        accountFile: path.join(
+          app.getPath('userData'),
+          'spotify-desktop-account.bin',
+        ),
+        safeStorage,
+        openExternal: (url) => shell.openExternal(url),
+        t,
+        recordAuthorization: (authorizedAt) => {
+          try {
+            configState.updateConfig({
+              spotifyPlaylistAuthorizedAt: authorizedAt,
+            });
+          } catch (error) {
+            recordDiagnostic({
+              process: 'main',
+              level: 'warning',
+              source: 'playlist-import',
+              operation: 'save-spotify-authorization-time',
+              error,
+            });
+          }
+        },
+      }),
+      searchPlaylistTrack: importHandlerRuntime.searchPlaylistTrack,
+      recordDiagnostic,
+    });
 
     separationAutomation = registerSeparationHandlers({
       ipcMain,

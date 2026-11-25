@@ -229,6 +229,9 @@
 - `bgmStandbyPlan.js` 原子保存 `bgm-standby.json`：單一 track id、position 與音量／mute／fade／Dim／pre-roll／post-roll（loop 固定）。Schema v3 預設 fade-out 0.6s、pre-roll 0.75s、post-roll 1.0s、fade-in 1.0s、音量 0.25、Talk −12 dB；Talk 不持久化。
 
 - `sessionPlatformVideos.js` 在 userData 保存配對，YouTube 授權另由 `safeStorage` 加密保存。Main 處理系統瀏覽器 PKCE 回呼、唯讀查詢和官方網址驗證，renderer 只接收帳號狀態與影片摘要。實測和發行邊界見[平台影片配對](contracts/performance-session-preparation.md#平台影片配對)。
+- `playlistImportHandlers.js` 共用上述 YouTube 唯讀授權，也處理 Spotify 本機 JSON 檔案選擇，保存前重驗曲庫範圍、當前授權及已選曲目。暫存預覽由 Main 管理，`PlaylistImportModal.vue` 管理使用者檢視與選擇，結果由既有播放清單儲存層保存。[平台播放清單契約](contracts/account-playlist-import.md)
+- Spotify 使用唯讀 PKCE 與固定官方端點。Main 保存確認的候選及本機曲庫識別，由既有外部來源批次下載並按來源順序完成儲存。[平台播放清單契約](contracts/account-playlist-import.md)
+- 設定的「帳號與登入授權」可直接綁定 YouTube 與 Spotify，由 Main 投影帳號資料與儲存狀態。Spotify 綁定寫入 userData 下加密的 `spotify-desktop-account.bin`，同一 PKCE 流程亦支援不保存授權的逐次匯入。最近授權時間仍寫入 `config.json` 的 `spotifyPlaylistAuthorizedAt`。Renderer 只取投影，頭像網址限指定平台的 CDN。[設定契約](contracts/settings-operation-feedback.md)
 
 - 封存場次在 `performance-session-plan.json` 保存可選的封面檔名。Main 選取並驗證本機圖片後寫入 `performance-session-covers/<sessionId>/`，透過 `utawakui-media://session-cover/` 提供明細與月曆共用的圖片。Renderer 只提交場次 ID。
 

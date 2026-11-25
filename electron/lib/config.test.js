@@ -47,6 +47,7 @@ describe('config', () => {
       autoSeparateAfterImport: false,
       youtubeLoginSource: 'none',
       youtubeLoginNoticeVersion: null,
+      spotifyPlaylistAuthorizedAt: null,
       autoErrorReporting: 'ask',
       experimentalLyricsAfterSeparation: false,
       separationGpuAcceleration: true,
@@ -179,6 +180,7 @@ describe('config', () => {
       autoSeparateAfterImport: false,
       youtubeLoginSource: 'none',
       youtubeLoginNoticeVersion: null,
+      spotifyPlaylistAuthorizedAt: null,
       autoErrorReporting: 'ask',
       separationGpuAcceleration: true,
       experimentalLyricsAfterSeparation: false,
@@ -281,6 +283,16 @@ describe('config', () => {
       JSON.stringify({ youtubeLoginSource: 'chrome' }),
     );
     expect(loadConfig(configPath).youtubeLoginSource).toBe('none');
+  });
+
+  it('persists the timestamp of the latest Spotify authorization', () => {
+    const authorizedAt = Date.now() - 1_000;
+    saveConfig(configPath, { spotifyPlaylistAuthorizedAt: authorizedAt });
+    expect(loadConfig(configPath).spotifyPlaylistAuthorizedAt).toBe(
+      authorizedAt,
+    );
+    saveConfig(configPath, { spotifyPlaylistAuthorizedAt: 'invalid' });
+    expect(loadConfig(configPath).spotifyPlaylistAuthorizedAt).toBeNull();
   });
 
   it('keeps a supported uiLanguage and resets unknown values to system', () => {

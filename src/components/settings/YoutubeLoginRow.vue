@@ -5,11 +5,13 @@ import UiHint from '../ui/UiHint.vue';
 import UiModal from '../ui/UiModal.vue';
 import UiSelect from '../ui/UiSelect.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
+import { formatLocalDateTime } from '../../utils/format.js';
 import { t } from '../../utils/i18n.js';
 
 // `login` mirrors useYoutubeLoginSettings with refs unwrapped.
 const props = defineProps({
   login: { type: Object, required: true },
+  featureEnabled: { type: Boolean, default: true },
 });
 const emit = defineEmits(['setSource', 'importFile', 'removeFile', 'refresh']);
 
@@ -21,15 +23,17 @@ const NOTICE_POINTS = Object.freeze(['point1', 'point2', 'point3', 'point4']);
 const usesFile = computed(
   () => props.login.loaded && props.login.source === 'file',
 );
-const fileStatus = computed(() =>
-  usesFile.value
-    ? t(
-        props.login.status.imported
-          ? 'capabilities.youtubeLogin.imported'
-          : 'capabilities.youtubeLogin.notImported',
-      )
-    : '',
-);
+const fileStatus = computed(() => {
+  if (props.login.status.imported)
+    return t(
+      usesFile.value && props.featureEnabled
+        ? 'capabilities.youtubeLogin.imported'
+        : 'capabilities.youtubeLogin.retainedFile',
+    );
+  if (usesFile.value && !props.login.fileBusy && !props.login.fileError)
+    return t('capabilities.youtubeLogin.notImported');
+  return '';
+});
 
 // The notice shows before the first import only.
 function requestImport() {
@@ -46,10 +50,15 @@ function confirmNotice() {
 <template>
   <SettingsDocumentItem
     :title="t('capabilities.youtubeLogin.title')"
-    :guidance="t('capabilities.youtubeLogin.guidance')"
+    :guidance="
+      t(
+        featureEnabled
+          ? 'capabilities.youtubeLogin.guidance'
+          : 'capabilities.youtubeLogin.providerDisabled',
+      )
+    "
     :status="fileStatus"
     :status-tone="login.status.imported ? 'success' : 'muted'"
-    variant="nested"
   >
     <template #actions>
       <UiSelect
@@ -59,7 +68,9 @@ function confirmNotice() {
         :options="login.items"
         :model-value="login.loaded ? login.source : ''"
         :placeholder="login.loaded ? '' : t('capabilities.unconfirmed')"
-        :disabled="login.busy || login.reading || !login.loaded"
+        :disabled="
+          !featureEnabled || login.busy || login.reading || !login.loaded
+        "
         :error="login.saveError"
         @update:model-value="emit('setSource', $event)"
       />
@@ -74,17 +85,37 @@ function confirmNotice() {
           >{{ t('capabilities.reload') }}</UiButton
         >
       </template>
-      <UiHint v-else-if="login.loaded && login.source === 'firefox'">{{
-        t('capabilities.youtubeLogin.firefoxHint')
-      }}</UiHint>
-      <template v-else-if="usesFile">
+      <template v-else>
+        <UiHint
+          v-if="featureEnabled && login.loaded && login.source === 'firefox'"
+          >{{ t('capabilities.youtubeLogin.firefoxHint') }}</UiHint
+        >
+        <UiHint v-if="login.status.savedAt">{{
+          t('capabilities.youtubeLogin.savedAt', {
+            date: formatLocalDateTime(login.status.savedAt),
+          })
+        }}</UiHint>
+        <UiHint
+          v-if="
+            login.status.secure === false && (usesFile || login.status.imported)
+          "
+          tone="warning"
+          >{{ t('platformVideo.authorizationLocked') }}</UiHint
+        >
         <UiHint v-if="login.fileError" tone="danger" role="alert">{{
           login.fileError
         }}</UiHint>
-        <div class="youtube-login-row__file-actions">
-          <UiButton :loading="login.fileBusy" @click="requestImport">{{
-            t('capabilities.youtubeLogin.importFile')
-          }}</UiButton>
+        <div
+          v-if="login.status.imported || (featureEnabled && usesFile)"
+          class="youtube-login-row__file-actions"
+        >
+          <UiButton
+            v-if="featureEnabled && usesFile"
+            :disabled="login.status.secure === false"
+            :loading="login.fileBusy"
+            @click="requestImport"
+            >{{ t('capabilities.youtubeLogin.importFile') }}</UiButton
+          >
           <UiButton
             v-if="login.status.imported"
             variant="ghost"
@@ -92,9 +123,12 @@ function confirmNotice() {
             @click="emit('removeFile')"
             >{{ t('capabilities.youtubeLogin.remove') }}</UiButton
           >
-          <UiButton variant="ghost" @click="guideOpen = true">{{
-            t('capabilities.youtubeLogin.howTo')
-          }}</UiButton>
+          <UiButton
+            v-if="featureEnabled && usesFile"
+            variant="ghost"
+            @click="guideOpen = true"
+            >{{ t('capabilities.youtubeLogin.howTo') }}</UiButton
+          >
         </div>
       </template>
     </template>

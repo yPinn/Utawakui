@@ -50,6 +50,7 @@ export function useImportExecution({
     create: createPlaylist,
     setTracks: setPlaylistTracks,
     upsertAlbum,
+    refresh,
   } = usePlaylists();
   const internal = reactive({
     batches: [],
@@ -108,7 +109,7 @@ export function useImportExecution({
   function completeJob(job, error, result) {
     active--;
     activeKeys.delete(job.id);
-    if (jobs.get(job.id) === job) jobs.delete(job.id);
+    if (jobs.get(job.key) === job) jobs.delete(job.key);
     job.state = 'settled';
     const appError =
       error &&
@@ -169,7 +170,10 @@ export function useImportExecution({
       }
       let operation;
       try {
-        operation = window.Utawakui.downloadAudio(job.id);
+        operation =
+          job.libraryEpoch === undefined
+            ? window.Utawakui.downloadAudio(job.id)
+            : window.Utawakui.downloadAudio(job.id, job.libraryEpoch);
       } catch (error) {
         completeJob(job, error);
         continue;
@@ -182,10 +186,22 @@ export function useImportExecution({
   }
 
   function subscribe(batch, track) {
-    let job = jobs.get(track.downloadKey);
+    const record = records.get(batch.id);
+    const libraryEpoch = record.plan?.libraryEpoch;
+    const key =
+      libraryEpoch === undefined
+        ? track.downloadKey
+        : `${track.downloadKey}@${libraryEpoch}`;
+    let job = jobs.get(key);
     if (!job) {
-      job = { id: track.downloadKey, state: 'pending', consumers: new Set() };
-      jobs.set(track.downloadKey, job);
+      job = {
+        id: track.downloadKey,
+        key,
+        libraryEpoch,
+        state: 'pending',
+        consumers: new Set(),
+      };
+      jobs.set(key, job);
       pending.push(job);
     }
     if (job.state === 'active') {
@@ -195,12 +211,22 @@ export function useImportExecution({
     return new Promise((resolve) => {
       const consumer = { batch, track, resolve, job };
       job.consumers.add(consumer);
-      records.get(batch.id).consumers.add(consumer);
+      record.consumers.add(consumer);
     });
   }
 
   async function syncCollection(batch) {
-    const { target } = records.get(batch.id);
+    const { target, plan } = records.get(batch.id);
+    if (plan) {
+      const result = await window.Utawakui.finalizePlaylistImportBatch(plan.id);
+      if (!result?.ok)
+        throw new Error(
+          result?.error?.message || t('import.execution.playlistNotSaved'),
+        );
+      if (!result.value.playlistId) return null;
+      await refresh().catch(() => {});
+      return true;
+    }
     const ownIds = batch.tracks
       .filter((t) => t.alreadyDownloaded || t.status === 'done')
       .map((t) => t.id);
@@ -337,7 +363,16 @@ export function useImportExecution({
     }
   }
 
-  function acceptBatch(revision) {
+  function releaseRecord(id) {
+    const plan = records.get(id)?.plan;
+    records.delete(id);
+    if (plan)
+      return window.Utawakui.releasePlaylistImportBatch(plan.id).catch(
+        () => {},
+      );
+  }
+
+  function acceptBatch(revision, plan = null) {
     // Retain failures and active groups. Older successful summaries are session-only.
     while (internal.batches.length >= MAX_BATCHES) {
       const index = internal.batches.findIndex((b) => b.phase === 'completed');
@@ -345,21 +380,23 @@ export function useImportExecution({
         setStatus(t('import.execution.queueFull'), 'pending');
         return null;
       }
-      records.delete(internal.batches[index].id);
+      releaseRecord(internal.batches[index].id);
       internal.batches.splice(index, 1);
     }
-    const single = state.sourceKind === 'single';
-    const sourceTracks = single
-      ? [
-          {
-            ...state.singleTrack,
-            downloadInput:
-              state.singleTrack.downloadInput ||
-              state.singleTrack.playbackVideoId ||
-              state.input,
-          },
-        ]
-      : (state.playlistTracks || []).filter((t) => t.selected);
+    const single = !plan && state.sourceKind === 'single';
+    const sourceTracks = plan
+      ? plan.tracks
+      : single
+        ? [
+            {
+              ...state.singleTrack,
+              downloadInput:
+                state.singleTrack.downloadInput ||
+                state.singleTrack.playbackVideoId ||
+                state.input,
+            },
+          ]
+        : (state.playlistTracks || []).filter((t) => t.selected);
     const tracks = [
       ...new Map(
         sourceTracks.map(copyTrack).map((track) => [track.id, track]),
@@ -370,12 +407,14 @@ export function useImportExecution({
       return null;
     }
     const id = `import-${++nextId}`;
-    const source = state.collectionSource
-      ? JSON.parse(JSON.stringify(state.collectionSource))
-      : null;
-    const key = single
-      ? null
-      : `${state.collectionKind}:${source?.platform || ''}:${source?.id || state.input}`;
+    const source =
+      !plan && state.collectionSource
+        ? JSON.parse(JSON.stringify(state.collectionSource))
+        : null;
+    const key =
+      single || plan
+        ? null
+        : `${state.collectionKind}:${source?.platform || ''}:${source?.id || state.input}`;
     if (key && !targets.has(key))
       targets.set(key, {
         playlistId: state.createdPlaylistId,
@@ -385,21 +424,26 @@ export function useImportExecution({
     internal.batches.push({
       id,
       kind: single ? 'single' : 'playlist',
-      title: single
-        ? state.singleTrack.title
-        : state.playlistTitle || t('import.execution.untitledList'),
-      collectionKind: state.collectionKind,
-      releaseType: state.collectionReleaseType || 'unknown',
-      releaseDate: state.collectionReleaseDate
-        ? {
-            value: state.collectionReleaseDate.value,
-            precision: state.collectionReleaseDate.precision,
-          }
-        : null,
+      title: plan
+        ? plan.title
+        : single
+          ? state.singleTrack.title
+          : state.playlistTitle || t('import.execution.untitledList'),
+      collectionKind: plan ? 'playlist' : state.collectionKind,
+      releaseType: (!plan && state.collectionReleaseType) || 'unknown',
+      releaseDate:
+        !plan && state.collectionReleaseDate
+          ? {
+              value: state.collectionReleaseDate.value,
+              precision: state.collectionReleaseDate.precision,
+            }
+          : null,
       source,
-      thumbnailUrl: single
-        ? state.singleTrack.thumbnailUrl || ''
-        : state.collectionThumbnailUrl,
+      thumbnailUrl: plan
+        ? ''
+        : single
+          ? state.singleTrack.thumbnailUrl || ''
+          : state.collectionThumbnailUrl,
       tracks,
       phase: 'queued',
       saveError: false,
@@ -410,6 +454,7 @@ export function useImportExecution({
     const batch = internal.batches.at(-1);
     records.set(id, {
       revision,
+      plan,
       target: key ? targets.get(key) : null,
       consumers: new Set(),
       completion: null,
@@ -446,6 +491,46 @@ export function useImportExecution({
     }
   }
 
+  async function findReviewedPlaylistTrack(request) {
+    if (!(await ensureProviderFlow())) return null;
+    const result = await window.Utawakui.findPlaylistImportTrack(request);
+    if (
+      result?.error?.code === 'FEATURE_DEPENDENCY_MISSING' &&
+      handleProviderSetupError(result.error)
+    )
+      return null;
+    return result;
+  }
+
+  async function submitReviewedPlaylist(input) {
+    if (!(await ensureProviderFlow())) return null;
+    if (
+      internal.batches.length >= MAX_BATCHES &&
+      !internal.batches.some((batch) => batch.phase === 'completed')
+    )
+      return { ok: false, error: { message: t('import.execution.queueFull') } };
+    if (internal.batches.length >= MAX_BATCHES) {
+      const index = internal.batches.findIndex(
+        (batch) => batch.phase === 'completed',
+      );
+      const [completed] = internal.batches.splice(index, 1);
+      await releaseRecord(completed.id);
+    }
+    const result = await window.Utawakui.acceptPlaylistImportBatch(input);
+    if (!result?.ok) return result;
+    const plan = result.value;
+    const existing = internal.batches.find(
+      (batch) => records.get(batch.id)?.plan?.id === plan.id,
+    );
+    if (existing) return { ok: true, value: existing.id };
+    const id = acceptBatch(null, plan);
+    if (!id) {
+      await window.Utawakui.releasePlaylistImportBatch(plan.id);
+      return { ok: false, error: { message: t('import.execution.queueFull') } };
+    }
+    return { ok: true, value: id };
+  }
+
   function detach(consumer) {
     consumer.cancellation ||= detachConsumer(consumer).finally(() => {
       consumer.cancellation = null;
@@ -459,7 +544,7 @@ export function useImportExecution({
     let cancellationAccepted = false;
     if (job.consumers.size === 1 && job.state === 'active') {
       job.state = 'cancelling';
-      if (jobs.get(job.id) === job) jobs.delete(job.id);
+      if (jobs.get(job.key) === job) jobs.delete(job.key);
       try {
         cancellationAccepted = Boolean(
           await window.Utawakui.cancelAudioDownload?.(job.id),
@@ -474,7 +559,7 @@ export function useImportExecution({
       if (!cancellationAccepted && job.state !== 'settled') {
         // A failed cancel keeps the original consumer alive. Rejoin any
         // submissions made while cancellation was awaiting the Main reply.
-        const replacement = jobs.get(job.id);
+        const replacement = jobs.get(job.key);
         if (replacement && replacement !== job) {
           for (const other of replacement.consumers) {
             other.job = job;
@@ -489,7 +574,7 @@ export function useImportExecution({
           if (index >= 0) pending.splice(index, 1);
         }
         job.state = 'active';
-        jobs.set(job.id, job);
+        jobs.set(job.key, job);
         batch.cancelError = true;
         batch.cancelRequested = false;
         return false;
@@ -501,7 +586,7 @@ export function useImportExecution({
     syncDraft(batch);
     resolve();
     if (job.consumers.size === 0) {
-      if (jobs.get(job.id) === job) jobs.delete(job.id);
+      if (jobs.get(job.key) === job) jobs.delete(job.key);
       if (job.state === 'pending') {
         job.state = 'settled';
         const index = pending.indexOf(job);
@@ -567,7 +652,7 @@ export function useImportExecution({
     const index = internal.batches.findIndex((b) => b.id === id && !busy(b));
     if (index < 0) return false;
     internal.batches.splice(index, 1);
-    records.delete(id);
+    releaseRecord(id);
     return true;
   }
   function clearCompletedBatches() {
@@ -580,6 +665,8 @@ export function useImportExecution({
     activity: readonly(internal),
     currentBatchId: () => currentBatch()?.id || null,
     submitImport,
+    submitReviewedPlaylist,
+    findReviewedPlaylistTrack,
     confirmImport,
     cancelTrackDownload,
     cancelBatch,

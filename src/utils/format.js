@@ -6,6 +6,10 @@ const LONG_DATE_FORMATTER = new Intl.DateTimeFormat(UI_LOCALE, {
   month: 'long',
   day: 'numeric',
 });
+const LOCAL_DATE_TIME_FORMATTER = new Intl.DateTimeFormat(UI_LOCALE, {
+  dateStyle: 'short',
+  timeStyle: 'short',
+});
 const GROUPED_INTEGER_FORMATTER = new Intl.NumberFormat(UI_LOCALE, {
   useGrouping: true,
   maximumFractionDigits: 0,
@@ -71,4 +75,9 @@ export function formatAddedDate(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '—';
   return LONG_DATE_FORMATTER.format(date);
+}
+
+export function formatLocalDateTime(timestamp) {
+  if (!Number.isFinite(timestamp)) return '';
+  return LOCAL_DATE_TIME_FORMATTER.format(timestamp);
 }

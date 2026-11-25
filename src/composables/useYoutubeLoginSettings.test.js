@@ -31,13 +31,23 @@ describe('useYoutubeLoginSettings', () => {
   });
 
   it('reads the source and file status together', async () => {
-    const api = bridge({ getYoutubeLoginSource: vi.fn(async () => 'file') });
+    const api = bridge({
+      getYoutubeLoginSource: vi.fn(async () => 'file'),
+      getYoutubeLoginStatus: vi.fn(async () => ({
+        imported: true,
+        noticeAcknowledged: true,
+        secure: true,
+        savedAt: 1_700_000_000_000,
+      })),
+    });
     const login = useYoutubeLoginSettings({ bridge: api });
     await login.refresh();
     expect(login.source.value).toBe('file');
     expect(login.status.value).toEqual({
-      imported: false,
-      noticeAcknowledged: false,
+      imported: true,
+      noticeAcknowledged: true,
+      secure: true,
+      savedAt: 1_700_000_000_000,
     });
   });
 

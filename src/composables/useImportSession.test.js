@@ -583,6 +583,7 @@ describe('useImportSession', () => {
       'dismissBatch',
       'dominantFailureCode',
       'filterOptions',
+      'findReviewedPlaylistTrack',
       'getTrackStatusClass',
       'openDownloadDir',
       'openYoutubeMusicSearch',
@@ -600,6 +601,7 @@ describe('useImportSession', () => {
       'setTrackSelected',
       'state',
       'submitImport',
+      'submitReviewedPlaylist',
       'toggleSelectAll',
       'visiblePlaylistTracks',
     ]);

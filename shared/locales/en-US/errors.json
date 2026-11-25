@@ -1,4 +1,24 @@
 {
+  "PLAYLIST_IMPORT_FAILED": {
+    "title": "Playlist import didn't finish",
+    "message": "Couldn't import the playlist. Try again."
+  },
+  "PLAYLIST_IMPORT_STALE": {
+    "title": "Playlist preview expired",
+    "message": "The playlist or library changed. Read the source, then preview it again."
+  },
+  "PLAYLIST_IMPORT_FILE": {
+    "title": "Couldn’t read the playlist file",
+    "message": "Choose a playlist CSV or Spotify playlist JSON file no larger than 8 MiB."
+  },
+  "PLAYLIST_IMPORT_SELECTION": {
+    "title": "Couldn't use the selected tracks",
+    "message": "Name the playlist and select at least one local track from the preview."
+  },
+  "PLAYLIST_IMPORT_LIMIT": {
+    "title": "Playlist limit reached",
+    "message": "The library has reached its limit for playlists."
+  },
   "TRACK_GAIN_FAILED": {
     "title": "Track volume didn't finish",
     "message": "Couldn't process this track's volume. Try again."
@@ -687,5 +707,45 @@
   "PLAYLIST_FOLDER_UPDATE_FAILED": {
     "title": "Folder can't be updated",
     "message": "This folder can't be updated. Try again."
+  },
+  "PLAYLIST_IMPORT_SPOTIFY_NOT_CONFIGURED": {
+    "title": "Spotify connection not configured",
+    "message": "Spotify account import isn’t configured in this build."
+  },
+  "PLAYLIST_IMPORT_SPOTIFY_LINK": {
+    "title": "Couldn’t read the playlist link",
+    "message": "Paste a full Spotify playlist URL. Open short links in your browser first."
+  },
+  "PLAYLIST_IMPORT_SPOTIFY_ACCESS": {
+    "title": "Spotify playlist unavailable",
+    "message": "Check that the authorized account owns or collaborates on this playlist."
+  },
+  "PLAYLIST_IMPORT_SPOTIFY_UNAVAILABLE": {
+    "title": "Spotify playlist unavailable",
+    "message": "Couldn’t read the Spotify playlist. Try again later."
+  },
+  "PLAYLIST_IMPORT_SPOTIFY_RATE": {
+    "title": "Spotify is limiting requests",
+    "message": "Wait a moment and try reading the Spotify playlist again."
+  },
+  "PLAYLIST_IMPORT_SPOTIFY_TIMEOUT": {
+    "title": "Spotify authorization timed out",
+    "message": "Start authorization again and complete it in your browser."
+  },
+  "PLAYLIST_IMPORT_SPOTIFY_RECONNECT": {
+    "title": "Reconnect Spotify",
+    "message": "This Spotify authorization is no longer available. Reconnect in Settings or import again with one-time authorization."
+  },
+  "PLAYLIST_IMPORT_SPOTIFY_BIND_FAILED": {
+    "title": "Couldn't connect Spotify",
+    "message": "Confirm you allowed read-only access in your browser, then try connecting again."
+  },
+  "PLAYLIST_IMPORT_BATCH_LIMIT": {
+    "title": "Import queue is full",
+    "message": "Finish or clear an existing import batch before trying again."
+  },
+  "PLAYLIST_IMPORT_BATCH_CHANGED": {
+    "title": "Local playlist changed",
+    "message": "The playlist membership or order changed. Organize the remaining downloads in your library."
   }
 }

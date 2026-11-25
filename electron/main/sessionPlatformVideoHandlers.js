@@ -55,6 +55,7 @@ function registerSessionPlatformVideoHandlers({
     connect: () => service.connect(),
     cancel: () => service.cancel(),
     disconnect: () => service.disconnect(),
+    'refresh-channel': () => service.refreshChannel(),
     get: sessionAction(({ sessionId }) => service.sessionPairs(sessionId)),
     'refresh-metadata': sessionAction(({ sessionId, verifySession }) =>
       service.refreshMetadata(sessionId, verifySession),

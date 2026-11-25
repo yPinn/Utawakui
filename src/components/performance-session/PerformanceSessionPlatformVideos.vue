@@ -326,7 +326,7 @@ watch(
           t(isYoutube ? 'platformVideo.link' : 'platformVideo.twitchLink')
         "
         :hint="canChoose ? '' : t('platformVideo.manualHint')"
-        :disabled="busy || loadingCandidates"
+        :disabled="busy"
         inputmode="url"
         @update:model-value="
           url = $event;
@@ -347,7 +347,7 @@ watch(
     <template #footer>
       <UiButton
         variant="accent"
-        :disabled="busy || loadingCandidates || (!candidateId && !url.trim())"
+        :disabled="busy || (!candidateId && !url.trim())"
         :loading="pendingAction === 'save'"
         @click="apply('save')"
       >

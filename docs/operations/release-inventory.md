@@ -79,6 +79,8 @@ network install or signed-installer acceptance; see the
 - The independent product site's source, dependencies and `site/dist/` stay
   outside the Windows package. See [ADR 0035](../adr/0035-product-site-and-download-entry.md).
 - 場次影片配對使用現有 Main／preload／renderer bundle。安裝包無平台憑證，手動配對可直接使用。實測配置見[平台影片配對](../contracts/performance-session-preparation.md#平台影片配對)。
+- 平台播放清單匯入使用相同 bundle。Spotify JSON 由原生選檔器讀取，YouTube 讀取沿用桌面授權配置。[平台播放清單](../contracts/account-playlist-import.md)
+- Spotify 播放清單唯讀與缺曲覆核沿用 Main／preload／renderer bundle。安裝包無 Spotify OAuth 憑證或新增執行依賴。[平台播放清單](../contracts/account-playlist-import.md)
 - Album download batches: `electron/main/releaseDownloadBatches.js` uses the
   Main bundle's dependency closure; its adjacent tests stay excluded.
   The fixed `library:release-download-batch` IPC uses the existing main preload.

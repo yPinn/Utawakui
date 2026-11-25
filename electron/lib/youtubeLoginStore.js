@@ -110,7 +110,13 @@ function createYoutubeLoginStore({
   }
 
   function getStatus() {
-    return { imported: fileSystem.existsSync(filePath) };
+    const file = fileSystem.statSync(filePath, { throwIfNoEntry: false });
+    const imported = file?.isFile() === true;
+    return {
+      imported,
+      secure: safeStorage?.isEncryptionAvailable?.() === true,
+      savedAt: imported ? Math.trunc(file.mtimeMs) : null,
+    };
   }
 
   function remove() {

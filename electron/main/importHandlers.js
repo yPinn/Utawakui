@@ -623,25 +623,33 @@ function registerImportHandlers({
     );
   });
 
-  ipcMain.handle('yt:download-audio', async (event, input) => {
-    requireFeatureGate(featureIds.PROVIDER_FLOW);
-    return classifyingFailures(
-      async () => {
-        const videoId = extractVideoId(input);
-        if (!videoId) throw new Error('invalid video id or YouTube URL');
-        try {
-          return await runProviderDownload(videoId);
-        } catch (error) {
-          if (error?.code !== 'IMPORT_DOWNLOAD_CANCELLED') throw error;
-          throw createAppError({
-            code: 'IMPORT_DOWNLOAD_CANCELLED',
-            severity: 'info',
-          });
-        }
-      },
-      { recordDiagnostic },
-    );
-  });
+  ipcMain.handle(
+    'yt:download-audio',
+    async (event, input, expectedLibraryEpoch) => {
+      requireFeatureGate(featureIds.PROVIDER_FLOW);
+      return classifyingFailures(
+        async () => {
+          const videoId = extractVideoId(input);
+          if (!videoId) throw new Error('invalid video id or YouTube URL');
+          try {
+            if (
+              expectedLibraryEpoch !== undefined &&
+              expectedLibraryEpoch !== getReleaseScope()?.epoch
+            )
+              throw createAppError({ code: 'IMPORT_LIBRARY_CHANGED' });
+            return await runProviderDownload(videoId);
+          } catch (error) {
+            if (error?.code !== 'IMPORT_DOWNLOAD_CANCELLED') throw error;
+            throw createAppError({
+              code: 'IMPORT_DOWNLOAD_CANCELLED',
+              severity: 'info',
+            });
+          }
+        },
+        { recordDiagnostic },
+      );
+    },
+  );
 
   ipcMain.handle('yt:cancel-download', async (event, input) => {
     requireFeatureGate(featureIds.PROVIDER_FLOW);
@@ -649,7 +657,26 @@ function registerImportHandlers({
     if (!videoId) return false;
     return providerDownloadScheduler.cancel(videoId);
   });
-  return { dispose: batches.dispose };
+  async function searchPlaylistTrack(recording) {
+    requireFeatureGate(featureIds.PROVIDER_FLOW);
+    const runner = await getProviderRunner();
+    return classifyingProviderSearchFailures(
+      async () => {
+        return resolveYoutubeSearchQuery(recording.title, {
+          recording,
+          existingIds: existingProviderIds().existingIds,
+          searchPlaybackCandidates: (canonical, metadata, options) =>
+            searchYoutubeCandidates(canonical, metadata, {
+              ...options,
+              runner,
+              onSearchDiagnostics,
+            }),
+        });
+      },
+      { recordDiagnostic },
+    );
+  }
+  return { dispose: batches.dispose, searchPlaylistTrack };
 }
 
 module.exports = {

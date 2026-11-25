@@ -21,10 +21,8 @@ import { useFeatureGatePresentation } from '../../composables/useFeatureGatePres
 import { useFeatureGates } from '../../composables/useFeatureGates.js';
 import { useObsIntegrationSettings } from '../../composables/useObsIntegrationSettings.js';
 import { useSeparationSettings } from '../../composables/useSeparationSettings.js';
-import { useYoutubeLoginSettings } from '../../composables/useYoutubeLoginSettings.js';
 import { useOnFirstVisible } from '../../composables/useOnFirstVisible.js';
 import SettingsSection from './SettingsSection.vue';
-import YoutubeLoginRow from './YoutubeLoginRow.vue';
 import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import FfmpegSourceModal from './FfmpegSourceModal.vue';
@@ -62,7 +60,6 @@ const OPTIONAL_FEATURE_GROUPS = Object.freeze([
 
 // Gates whose #settings slot holds rows; a slot outside this set never shows.
 const SETTINGS_FEATURES = new Set([
-  FEATURE_IDS.PROVIDER_FLOW,
   FEATURE_IDS.PUBLIC_OUTPUT_FLOW,
   FEATURE_IDS.OBS_INTEGRATION,
   FEATURE_IDS.MOBILE_COMPANION,
@@ -82,19 +79,6 @@ const {
   repairDependency,
 } = useFeatureDependencies();
 const separationSettings = useSeparationSettings();
-const youtubeLoginSettings = useYoutubeLoginSettings();
-const youtubeLogin = computed(() => ({
-  source: youtubeLoginSettings.source.value,
-  loaded: youtubeLoginSettings.loaded.value,
-  reading: youtubeLoginSettings.reading.value,
-  busy: youtubeLoginSettings.busy.value,
-  readError: youtubeLoginSettings.readError.value,
-  saveError: youtubeLoginSettings.saveError.value,
-  status: youtubeLoginSettings.status.value,
-  fileBusy: youtubeLoginSettings.fileBusy.value,
-  fileError: youtubeLoginSettings.fileError.value,
-  items: youtubeLoginSettings.items,
-}));
 const obsIntegrationSettings = useObsIntegrationSettings();
 const { confirm: confirmAction } = useAppConfirmation();
 const systemFfmpegDetection = shallowRef(null);
@@ -328,7 +312,6 @@ onMounted(() => {
   refreshDependencies();
   separationSettings.refreshPreference();
   separationSettings.refreshAutoSeparation();
-  youtubeLoginSettings.refresh();
   obsIntegrationSettings.refreshSettings();
 });
 
@@ -395,14 +378,6 @@ onUnmounted(() => clearFeatureGateRequest());
             @item-advanced-action="handleWorkflowItemAdvancedAction"
           >
             <template #settings>
-              <YoutubeLoginRow
-                v-if="gate.id === FEATURE_IDS.PROVIDER_FLOW && gate.enabled"
-                :login="youtubeLogin"
-                @set-source="youtubeLoginSettings.setSource"
-                @import-file="youtubeLoginSettings.importFile"
-                @remove-file="youtubeLoginSettings.removeFile"
-                @refresh="youtubeLoginSettings.refresh"
-              />
               <CompanionSettingsBlock
                 v-if="gate.id === FEATURE_IDS.MOBILE_COMPANION && gate.enabled"
               />

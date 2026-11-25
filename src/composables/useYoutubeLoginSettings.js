@@ -19,7 +19,12 @@ export function useYoutubeLoginSettings(options = {}) {
     readMessage: t('capabilities.youtubeLogin.readFailed'),
     saveMessage: t('capabilities.youtubeLogin.saveFailed'),
   });
-  const status = shallowRef({ imported: false, noticeAcknowledged: false });
+  const status = shallowRef({
+    imported: false,
+    noticeAcknowledged: false,
+    secure: null,
+    savedAt: null,
+  });
   const fileBusy = shallowRef(false);
   const fileError = shallowRef('');
 
@@ -27,6 +32,8 @@ export function useYoutubeLoginSettings(options = {}) {
     status.value = {
       imported: next?.imported === true,
       noticeAcknowledged: next?.noticeAcknowledged === true,
+      secure: typeof next?.secure === 'boolean' ? next.secure : null,
+      savedAt: Number.isFinite(next?.savedAt) ? next.savedAt : null,
     };
   }
 
