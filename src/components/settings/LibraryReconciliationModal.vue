@@ -246,8 +246,9 @@ function save() {
               :key="merge.mergeId"
               class="library-reconciliation__item"
             >
-              <span class="library-reconciliation__copy">{{ merge.name }}</span
-              ><UiButton
+              <span class="library-reconciliation__copy">{{
+                merge.name
+              }}</span><UiButton
                 :disabled="busy"
                 :aria-label="
                   t('reconciliation.undoMergeNamed', { name: merge.name })

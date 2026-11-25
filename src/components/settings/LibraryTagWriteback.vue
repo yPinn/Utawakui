@@ -150,8 +150,7 @@ async function restore(receiptId) {
             <li v-for="item in state.options.history" :key="item.receiptId">
               <span>{{
                 new Date(item.createdAt).toLocaleString(UI_LOCALE)
-              }}</span
-              ><UiButton
+              }}</span><UiButton
                 :disabled="disabled || !item.canRestore"
                 @click="restore(item.receiptId)"
                 >{{ t('tagWriteback.restore') }}</UiButton
@@ -183,8 +182,7 @@ async function restore(receiptId) {
           <div class="library-tags__actions">
             <UiButton :disabled="disabled" @click="api.back">{{
               t('common.back')
-            }}</UiButton
-            ><UiButton
+            }}</UiButton><UiButton
               variant="accent"
               :disabled="disabled || state.preview.unchanged"
               :loading="state.busy"

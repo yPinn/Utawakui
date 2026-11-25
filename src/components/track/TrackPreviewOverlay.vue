@@ -349,8 +349,7 @@ onUnmounted(() => setKeyboardListener(false));
                     >
                       <span class="track-preview__lyric-phrase">{{
                         phrase.text
-                      }}</span
-                      >{{ phrase.spaceAfter ? ' ' : '' }}
+                      }}</span>{{ phrase.spaceAfter ? ' ' : '' }}
                     </template>
                   </p>
                 </div>

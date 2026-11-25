@@ -40,8 +40,9 @@ function setSectionOpen(id, open) {
           :chords="[['↑'], ['↓'], ['M']]"
           :label="t('shortcuts.block.defaultVolumeKeys')"
         />
-        <UiHint>{{ t('shortcuts.block.holdModifier') }}</UiHint
-        ><KeyboardShortcutKeys :chords="[['Shift']]" />
+        <UiHint>{{
+          t('shortcuts.block.holdModifier')
+        }}</UiHint><KeyboardShortcutKeys :chords="[['Shift']]" />
       </div>
     </UiDisclosure>
     <UiHint>{{ t('shortcuts.block.fixedHint') }}</UiHint>

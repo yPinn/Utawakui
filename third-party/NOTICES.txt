@@ -4,11 +4,11 @@ The browser root dependency closure is conservative and can include build-time d
 Upstream aggregate notices may cover additional platforms or components; inclusion does not imply that every named component is shipped.
 This collection does not grant rights to music, lyrics, artwork, or external services.
 
-Package: @babel/helper-string-parser 7.29.13
+Package: @babel/helper-string-parser 7.29.15
 Lock path: node_modules/@babel/helper-string-parser
 License: MIT
 
-Source: https://registry.npmjs.org/@babel/helper-string-parser/-/helper-string-parser-7.29.13.tgz
+Source: https://registry.npmjs.org/@babel/helper-string-parser/-/helper-string-parser-7.29.15.tgz
 File: node_modules/@babel/helper-string-parser/LICENSE
 SHA-256: 117da2af0d4ce0fe1c8e19b5cff9dcd806adf973d328d27b11d4448c4ff24f76
 
@@ -68,11 +68,11 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-Package: @babel/parser 7.29.13
+Package: @babel/parser 7.29.15
 Lock path: node_modules/@babel/parser
 License: MIT
 
-Source: https://registry.npmjs.org/@babel/parser/-/parser-7.29.13.tgz
+Source: https://registry.npmjs.org/@babel/parser/-/parser-7.29.15.tgz
 File: node_modules/@babel/parser/LICENSE
 SHA-256: 2e97627cb278aa7556fb9e8817368302301a595b6c7582512b8d74c57b773652
 
@@ -97,11 +97,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 
-Package: @babel/types 7.29.11
+Package: @babel/types 7.29.15
 Lock path: node_modules/@babel/types
 License: MIT
 
-Source: https://registry.npmjs.org/@babel/types/-/types-7.29.11.tgz
+Source: https://registry.npmjs.org/@babel/types/-/types-7.29.15.tgz
 File: node_modules/@babel/types/LICENSE
 SHA-256: 117da2af0d4ce0fe1c8e19b5cff9dcd806adf973d328d27b11d4448c4ff24f76
 
@@ -148,11 +148,11 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-Package: @intlify/core-base 11.4.18
+Package: @intlify/core-base 11.4.23
 Lock path: node_modules/@intlify/core-base
 License: MIT
 
-Source: https://registry.npmjs.org/@intlify/core-base/-/core-base-11.4.18.tgz
+Source: https://registry.npmjs.org/@intlify/core-base/-/core-base-11.4.23.tgz
 File: node_modules/@intlify/core-base/LICENSE
 SHA-256: 403a4d6f9815ae33bd7a613202529f0805045c642f92a169fa673d7fa07dd568
 
@@ -178,11 +178,11 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-Package: @intlify/devtools-types 11.4.18
+Package: @intlify/devtools-types 11.4.23
 Lock path: node_modules/@intlify/devtools-types
 License: MIT
 
-Source: https://registry.npmjs.org/@intlify/devtools-types/-/devtools-types-11.4.18.tgz
+Source: https://registry.npmjs.org/@intlify/devtools-types/-/devtools-types-11.4.23.tgz
 File: node_modules/@intlify/devtools-types/LICENSE
 SHA-256: 8f431e584baf8dc943c4188a9e3c27cf4b6a5b540b2d0801468023db86345e7d
 
@@ -208,11 +208,11 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-Package: @intlify/message-compiler 11.4.18
+Package: @intlify/message-compiler 11.4.23
 Lock path: node_modules/@intlify/message-compiler
 License: MIT
 
-Source: https://registry.npmjs.org/@intlify/message-compiler/-/message-compiler-11.4.18.tgz
+Source: https://registry.npmjs.org/@intlify/message-compiler/-/message-compiler-11.4.23.tgz
 File: node_modules/@intlify/message-compiler/LICENSE
 SHA-256: 403a4d6f9815ae33bd7a613202529f0805045c642f92a169fa673d7fa07dd568
 
@@ -238,11 +238,11 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-Package: @intlify/shared 11.4.18
+Package: @intlify/shared 11.4.23
 Lock path: node_modules/@intlify/shared
 License: MIT
 
-Source: https://registry.npmjs.org/@intlify/shared/-/shared-11.4.18.tgz
+Source: https://registry.npmjs.org/@intlify/shared/-/shared-11.4.23.tgz
 File: node_modules/@intlify/shared/LICENSE
 SHA-256: 403a4d6f9815ae33bd7a613202529f0805045c642f92a169fa673d7fa07dd568
 
@@ -297,11 +297,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 
-Package: @lucide/vue 1.70.0
+Package: @lucide/vue 1.79.0
 Lock path: node_modules/@lucide/vue
 License: ISC
 
-Source: https://registry.npmjs.org/@lucide/vue/-/vue-1.70.0.tgz
+Source: https://registry.npmjs.org/@lucide/vue/-/vue-1.79.0.tgz
 File: node_modules/@lucide/vue/LICENSE
 SHA-256: b495047bd93a9b06913511076f504daba17d5bbeb3e0650f3bb53a4220329c57
 
@@ -575,11 +575,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 
-Package: @tokenizer/inflate 0.6.0
+Package: @tokenizer/inflate 0.6.1
 Lock path: node_modules/@tokenizer/inflate
 License: MIT
 
-Source: https://registry.npmjs.org/@tokenizer/inflate/-/inflate-0.6.0.tgz
+Source: https://registry.npmjs.org/@tokenizer/inflate/-/inflate-0.6.1.tgz
 File: node_modules/@tokenizer/inflate/LICENSE
 SHA-256: 5bb0e8b566dee0e946cafd9bbed359eb0494580df86457876b4f41bba5c77b25
 
@@ -690,11 +690,11 @@ SHA-256: c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383
     SOFTWARE
 
 
-Package: @vue/compiler-core 3.5.45
+Package: @vue/compiler-core 3.5.46
 Lock path: node_modules/@vue/compiler-core
 License: MIT
 
-Source: https://registry.npmjs.org/@vue/compiler-core/-/compiler-core-3.5.45.tgz
+Source: https://registry.npmjs.org/@vue/compiler-core/-/compiler-core-3.5.46.tgz
 File: node_modules/@vue/compiler-core/LICENSE
 SHA-256: 1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175
 
@@ -721,11 +721,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 
-Package: @vue/compiler-dom 3.5.45
+Package: @vue/compiler-dom 3.5.46
 Lock path: node_modules/@vue/compiler-dom
 License: MIT
 
-Source: https://registry.npmjs.org/@vue/compiler-dom/-/compiler-dom-3.5.45.tgz
+Source: https://registry.npmjs.org/@vue/compiler-dom/-/compiler-dom-3.5.46.tgz
 File: node_modules/@vue/compiler-dom/LICENSE
 SHA-256: 1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175
 
@@ -752,11 +752,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 
-Package: @vue/compiler-sfc 3.5.45
+Package: @vue/compiler-sfc 3.5.46
 Lock path: node_modules/@vue/compiler-sfc
 License: MIT
 
-Source: https://registry.npmjs.org/@vue/compiler-sfc/-/compiler-sfc-3.5.45.tgz
+Source: https://registry.npmjs.org/@vue/compiler-sfc/-/compiler-sfc-3.5.46.tgz
 File: node_modules/@vue/compiler-sfc/LICENSE
 SHA-256: 1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175
 
@@ -783,11 +783,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 
-Package: @vue/compiler-ssr 3.5.45
+Package: @vue/compiler-ssr 3.5.46
 Lock path: node_modules/@vue/compiler-ssr
 License: MIT
 
-Source: https://registry.npmjs.org/@vue/compiler-ssr/-/compiler-ssr-3.5.45.tgz
+Source: https://registry.npmjs.org/@vue/compiler-ssr/-/compiler-ssr-3.5.46.tgz
 File: node_modules/@vue/compiler-ssr/LICENSE
 SHA-256: 1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175
 
@@ -845,11 +845,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 
-Package: @vue/reactivity 3.5.45
+Package: @vue/reactivity 3.5.46
 Lock path: node_modules/@vue/reactivity
 License: MIT
 
-Source: https://registry.npmjs.org/@vue/reactivity/-/reactivity-3.5.45.tgz
+Source: https://registry.npmjs.org/@vue/reactivity/-/reactivity-3.5.46.tgz
 File: node_modules/@vue/reactivity/LICENSE
 SHA-256: 1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175
 
@@ -876,11 +876,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 
-Package: @vue/runtime-core 3.5.45
+Package: @vue/runtime-core 3.5.46
 Lock path: node_modules/@vue/runtime-core
 License: MIT
 
-Source: https://registry.npmjs.org/@vue/runtime-core/-/runtime-core-3.5.45.tgz
+Source: https://registry.npmjs.org/@vue/runtime-core/-/runtime-core-3.5.46.tgz
 File: node_modules/@vue/runtime-core/LICENSE
 SHA-256: 1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175
 
@@ -907,11 +907,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 
-Package: @vue/runtime-dom 3.5.45
+Package: @vue/runtime-dom 3.5.46
 Lock path: node_modules/@vue/runtime-dom
 License: MIT
 
-Source: https://registry.npmjs.org/@vue/runtime-dom/-/runtime-dom-3.5.45.tgz
+Source: https://registry.npmjs.org/@vue/runtime-dom/-/runtime-dom-3.5.46.tgz
 File: node_modules/@vue/runtime-dom/LICENSE
 SHA-256: 1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175
 
@@ -938,11 +938,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 
-Package: @vue/server-renderer 3.5.45
+Package: @vue/server-renderer 3.5.46
 Lock path: node_modules/@vue/server-renderer
 License: MIT
 
-Source: https://registry.npmjs.org/@vue/server-renderer/-/server-renderer-3.5.45.tgz
+Source: https://registry.npmjs.org/@vue/server-renderer/-/server-renderer-3.5.46.tgz
 File: node_modules/@vue/server-renderer/LICENSE
 SHA-256: 1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175
 
@@ -969,11 +969,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 
-Package: @vue/shared 3.5.45
+Package: @vue/shared 3.5.46
 Lock path: node_modules/@vue/shared
 License: MIT
 
-Source: https://registry.npmjs.org/@vue/shared/-/shared-3.5.45.tgz
+Source: https://registry.npmjs.org/@vue/shared/-/shared-3.5.46.tgz
 File: node_modules/@vue/shared/LICENSE
 SHA-256: 1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175
 
@@ -1239,11 +1239,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 
-Package: csstype 3.2.3
+Package: csstype 3.2.4
 Lock path: node_modules/csstype
 License: MIT
 
-Source: https://registry.npmjs.org/csstype/-/csstype-3.2.3.tgz
+Source: https://registry.npmjs.org/csstype/-/csstype-3.2.4.tgz
 File: node_modules/csstype/LICENSE
 SHA-256: 11d55bd4541c75ee7879547ac49089c489163dae49551389713c3d026cab383e
 
@@ -1992,11 +1992,11 @@ SOFTWARE.
 
 
 
-Package: global-agent 4.1.7
+Package: global-agent 4.1.8
 Lock path: node_modules/global-agent
 License: BSD-3-Clause
 
-Source: https://registry.npmjs.org/global-agent/-/global-agent-4.1.7.tgz
+Source: https://registry.npmjs.org/global-agent/-/global-agent-4.1.8.tgz
 File: node_modules/global-agent/LICENSE
 SHA-256: 2aabdab5d0ce03a7314def8222988c2da4ba593ae82ae312439e5e306001dbae
 
@@ -2088,29 +2088,69 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 
-Package: graceful-fs 4.2.11
+Package: graceful-fs 4.2.12
 Lock path: node_modules/graceful-fs
-License: ISC
+License: BlueOak-1.0.0
 
-Source: https://registry.npmjs.org/graceful-fs/-/graceful-fs-4.2.11.tgz
-File: node_modules/graceful-fs/LICENSE
-SHA-256: f65c5d9f22a317b2a10803bd1868461ce6499c2ed7217bc80c0cc772a748789c
+Source: https://registry.npmjs.org/graceful-fs/-/graceful-fs-4.2.12.tgz
+File: node_modules/graceful-fs/LICENSE.md
+SHA-256: 8a1af140fdfbf5afd3df27f7e662f989c5b963a300020dfafce42033cae9e004
 
-The ISC License
+# Blue Oak Model License
 
-Copyright (c) 2011-2022 Isaac Z. Schlueter, Ben Noordhuis, and Contributors
+Version 1.0.0
 
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted, provided that the above
-copyright notice and this permission notice appear in all copies.
+## Purpose
 
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
-IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+This license gives everyone as much permission to work with
+this software as possible, while protecting contributors
+from liability.
+
+## Acceptance
+
+In order to receive this license, you must agree to its
+rules.  The rules of this license are both obligations
+under that agreement and conditions to your license.
+You must not do anything with this software that triggers
+a rule that you cannot or will not follow.
+
+## Copyright
+
+Each contributor licenses you to do everything with this
+software that would otherwise infringe that contributor's
+copyright in it.
+
+## Notices
+
+You must ensure that everyone who gets a copy of
+any part of this software from you, with or without
+changes, also gets the text of this license or a link to
+<https://blueoakcouncil.org/license/1.0.0>.
+
+## Excuse
+
+If anyone notifies you in writing that you have not
+complied with [Notices](#notices), you can keep your
+license by taking all practical steps to comply within 30
+days after the notice.  If you do not do so, your license
+ends immediately.
+
+## Patent
+
+Each contributor licenses you to do everything with this
+software that would otherwise infringe any patent claims
+they can license or become able to license.
+
+## Reliability
+
+No contributor can revoke this license.
+
+## No Liability
+
+***As far as the law allows, this software comes as is,
+without any warranty or condition, and no contributor
+will be liable to anyone for any damages related to this
+software or this license, under any kind of legal claim.***
 
 
 Package: gsap 3.15.1
@@ -10079,11 +10119,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 
-Package: postcss 8.5.32
+Package: postcss 8.5.33
 Lock path: node_modules/postcss
 License: MIT
 
-Source: https://registry.npmjs.org/postcss/-/postcss-8.5.32.tgz
+Source: https://registry.npmjs.org/postcss/-/postcss-8.5.33.tgz
 File: node_modules/postcss/LICENSE
 SHA-256: 5be1f3465bba68a626777f984878814aaf35e7ef8e9fd314d469bcf887050fb8
 
@@ -10267,11 +10307,11 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-Package: source-map-js 1.2.2
+Package: source-map-js 1.2.4
 Lock path: node_modules/source-map-js
 License: BSD-3-Clause
 
-Source: https://registry.npmjs.org/source-map-js/-/source-map-js-1.2.2.tgz
+Source: https://registry.npmjs.org/source-map-js/-/source-map-js-1.2.4.tgz
 File: node_modules/source-map-js/LICENSE
 SHA-256: 6cb0631f71c7749763fd3dd1d5bee52dd1070ec17f2edc1710079ad070bd2fbd
 
@@ -10305,11 +10345,11 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-Package: strtok3 10.7.0
+Package: strtok3 10.8.0
 Lock path: node_modules/strtok3
 License: MIT
 
-Source: https://registry.npmjs.org/strtok3/-/strtok3-10.7.0.tgz
+Source: https://registry.npmjs.org/strtok3/-/strtok3-10.8.0.tgz
 File: node_modules/strtok3/LICENSE.txt
 SHA-256: c33959fabde25a1b6161d8e0fdc6fdcea1fc48095fe0bd51043247bfd214287f
 
@@ -10491,11 +10531,11 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-Package: vue 3.5.45
+Package: vue 3.5.46
 Lock path: node_modules/vue
 License: MIT
 
-Source: https://registry.npmjs.org/vue/-/vue-3.5.45.tgz
+Source: https://registry.npmjs.org/vue/-/vue-3.5.46.tgz
 File: node_modules/vue/LICENSE
 SHA-256: 1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175
 
@@ -10522,11 +10562,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 
-Package: vue-i18n 11.4.18
+Package: vue-i18n 11.4.23
 Lock path: node_modules/vue-i18n
 License: MIT
 
-Source: https://registry.npmjs.org/vue-i18n/-/vue-i18n-11.4.18.tgz
+Source: https://registry.npmjs.org/vue-i18n/-/vue-i18n-11.4.23.tgz
 File: node_modules/vue-i18n/LICENSE
 SHA-256: 403a4d6f9815ae33bd7a613202529f0805045c642f92a169fa673d7fa07dd568
 
@@ -10601,11 +10641,11 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-Package: ws 8.22.1
+Package: ws 8.23.0
 Lock path: node_modules/ws
 License: MIT
 
-Source: https://registry.npmjs.org/ws/-/ws-8.22.1.tgz
+Source: https://registry.npmjs.org/ws/-/ws-8.23.0.tgz
 File: node_modules/ws/LICENSE
 SHA-256: 2b29dcfe0d6471f7e8c92c5fb38c9f93edee10330937055440192f1832b1ecef
 

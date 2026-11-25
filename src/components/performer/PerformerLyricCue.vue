@@ -61,16 +61,16 @@ const groups = computed(() => {
             :class="{
               'lyrics-word-cue performer-lyric-cue__word--active': part.cue,
             }"
-            >{{ part.text }}</span
-          ><rt v-if="group.reading">{{ group.reading }}</rt>
+            >{{ part.text }}</span><rt v-if="group.reading">{{
+            group.reading
+          }}</rt>
         </component></span
       >
     </p>
     <p v-if="reading?.romaji" class="performer-lyric-cue__reading">
       <span v-if="reading.romajiScope === 'line'">{{
         t('performer.cue.lineReading')
-      }}</span
-      ><span :lang="romanizationLanguage">{{ reading.romaji }}</span>
+      }}</span><span :lang="romanizationLanguage">{{ reading.romaji }}</span>
     </p>
   </div>
 </template>

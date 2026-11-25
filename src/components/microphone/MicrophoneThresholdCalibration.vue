@@ -47,8 +47,8 @@ function apply() {
     <div role="status">
       <template v-if="candidate.status === 'ready'">
         <p class="mic-calibration__candidate">
-          建議開啟 <output>{{ candidate.openThreshold }}</output
-          >／關閉 <output>{{ candidate.closeThreshold }} dBFS</output>
+          建議開啟 <output>{{ candidate.openThreshold }}</output>／關閉
+          <output>{{ candidate.closeThreshold }} dBFS</output>
         </p>
         <p class="mic-calibration__references">
           背景上緣 {{ candidate.quietDbfs.toFixed(1) }} · 輕聲下緣

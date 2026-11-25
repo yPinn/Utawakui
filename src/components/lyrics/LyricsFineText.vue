@@ -54,8 +54,7 @@ const groups = computed(() => {
           'lyrics-word-cue lyrics-fine-text__cue lyrics-line__experimental-active':
             part.cue,
         }"
-        >{{ part.text }}</span
-      ><rt v-if="group.reading">{{ group.reading }}</rt>
+        >{{ part.text }}</span><rt v-if="group.reading">{{ group.reading }}</rt>
     </component>
   </span>
 </template>

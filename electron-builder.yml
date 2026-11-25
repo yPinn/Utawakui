@@ -14,7 +14,7 @@ appId: com.utawakui.app
 productName: Utawakui
 # Keep packaging deterministic even if a developer checkout has an older
 # Electron distribution locked by a running dev session.
-electronVersion: 43.8.7
+electronVersion: 43.8.13
 afterPack: scripts/afterPackThirdPartyNotices.cjs
 beforePack: scripts/beforePackReleaseRuntime.cjs
 extraMetadata:
@@ -96,11 +96,11 @@ files:
   # Fisheye Lens uses its exact-route view, painter, GSAP recipe and lyrics projection.
   # Kinetic Pop loads its exact-route stylesheet and shared browser renderer on demand.
   - overlay/**/*
-  - '!overlay/**/*.test.js'
+  - '!overlay/**/*.{test,spec}.{cjs,js,mjs}'
   # Includes Phantom Thieves accent fonts, Hangul font presets and their notices.
   # Main and renderer use the same session timestamp and CSV projection.
   - shared/**/*
-  - '!shared/**/*.test.js'
+  - '!shared/**/*.{test,spec}.{cjs,js,mjs}'
   - LICENSE.md
   - THIRD_PARTY_NOTICES.md
   - package.json

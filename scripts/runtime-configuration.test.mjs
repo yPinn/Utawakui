@@ -79,10 +79,10 @@ describe('runtime configuration boundaries', () => {
     });
 
     expect(packageJson.devDependencies.electron).toBe('^43.7.8');
-    expect(packageLock.packages['node_modules/electron'].version).toBe(
-      '43.8.7',
-    );
-    expect(builder.electronVersion).toBe('43.8.7');
+    const lockedElectron =
+      packageLock.packages['node_modules/electron'].version;
+    expect(lockedElectron).toMatch(/^43\.\d+\.\d+$/u);
+    expect(builder.electronVersion).toBe(lockedElectron);
     expect(builder.electronFuses).toEqual({
       runAsNode: true,
       enableNodeOptionsEnvironmentVariable: false,

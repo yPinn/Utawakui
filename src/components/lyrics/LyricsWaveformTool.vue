@@ -1004,8 +1004,7 @@ const noticeLabel = computed(
       </div>
       <div v-if="showsHelp" class="lyrics-waveform__help">
         <UiHint class="lyrics-waveform__shortcuts">
-          <span>{{ t('lyricsEditor.waveform.panelKeys') }}</span
-          ><UiKbd>=</UiKbd
+          <span>{{ t('lyricsEditor.waveform.panelKeys') }}</span><UiKbd>=</UiKbd
           ><span>{{ t('lyricsEditor.waveform.zoomInKey') }}</span>
           <UiKbd>-</UiKbd
           ><span>{{ t('lyricsEditor.waveform.zoomOutKey') }}</span>
