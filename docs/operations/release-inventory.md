@@ -76,6 +76,8 @@ network install or signed-installer acceptance; see the
   and no policy tool, source map, decoder, mapping or bytecode loader ships.
   See [ADR 0030](../adr/0030-release-runtime-bundles.md) and
   [ADR 0031](../adr/0031-scoped-release-private-symbols.md).
+- The independent product site's source, dependencies and `site/dist/` stay
+  outside the Windows package. See [ADR 0035](../adr/0035-product-site-and-download-entry.md).
 - 場次影片配對使用現有 Main／preload／renderer bundle。安裝包無平台憑證，手動配對可直接使用。實測配置見[平台影片配對](../contracts/performance-session-preparation.md#平台影片配對)。
 - Album download batches: `electron/main/releaseDownloadBatches.js` uses the
   Main bundle's dependency closure; its adjacent tests stay excluded.

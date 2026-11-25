@@ -44,6 +44,8 @@ const WINDOWS_PACKAGE_PATTERNS = [
 const QUALITY_ONLY_PATTERNS = [
   /^public\//u,
   /^public-repo\//u,
+  // The product site builds and deploys separately; it never enters the app package.
+  /^site\//u,
   /^src\//u,
   /^commitlint\.config\.js$/u,
   /^eslint\.config\.js$/u,

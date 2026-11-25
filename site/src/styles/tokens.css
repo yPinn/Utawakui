@@ -1,0 +1,50 @@
+/*
+ * Site token layer. Colours, spacing, radii, shadows, motion and body type all
+ * resolve to the app's --ui-* tokens (src/styles/tokens.css). Only the marketing
+ * display tier below is site-specific, because the app has no hero-scale type.
+ * Declared on body, where the app's surface root defines --ui-*.
+ */
+body {
+  /* Chapter grounds: canvas, folder materials and the shell substrate. */
+  --site-ground-canvas: var(--ui-color-canvas);
+  --site-ground-surface: var(--ui-color-surface);
+  --site-ground-dark: var(--ui-color-shell-substrate);
+  --site-ground-primary: var(--ui-color-folder-primary);
+  --site-ground-secondary: var(--ui-color-folder-secondary);
+  --site-on-material: var(--ui-color-folder-primary-foreground);
+
+  --site-paper: var(--ui-palette-warm-neutral-50);
+  --site-text: var(--ui-color-text);
+  --site-text-muted: var(--ui-color-text-muted);
+  --site-border: var(--ui-color-border);
+  --site-accent: var(--ui-color-accent);
+  --site-accent-contrast: var(--ui-color-accent-contrast);
+  /* The lyrics reader's amber highlighter marks key phrases. */
+  --site-highlight: var(--ui-palette-amber-300);
+  --site-current: var(--ui-color-current);
+
+  --site-radius: var(--ui-radius-lg);
+  --site-radius-pill: var(--ui-radius-pill);
+  --site-shadow: var(--ui-shadow-overlay);
+  --site-shadow-soft: var(--ui-shadow-contact);
+  --site-border-line: 1px solid var(--ui-color-border);
+
+  /* Display face mirrors the overlay CJK stack; body uses the app's system role. */
+  --site-font-display:
+    'GenWanMin2 TW', 'GenWanMin2 TC', 'Noto Serif TC', 'Microsoft JhengHei',
+    serif;
+  --site-font-body: var(--ui-font-family-base);
+  --site-weight-display: 900;
+
+  /* Marketing display tier (site-only). Body copy uses the app's --ui-type-* recipes. */
+  --site-type-hero: clamp(3.5rem, 12vw, 9rem);
+  --site-type-chapter: clamp(2rem, 5vw, 4rem);
+  --site-type-lead: clamp(1.75rem, 4vw, 3rem);
+  --site-type-statement: clamp(1.5rem, 3vw, 2.25rem);
+  --site-line-display: 1.15;
+  --site-line-reading: 1.65;
+
+  --content-width: min(72rem, 88vw);
+  --site-viewport-height: 100dvh;
+  --wave-h: clamp(2.5rem, 8vw, 7.5rem);
+}

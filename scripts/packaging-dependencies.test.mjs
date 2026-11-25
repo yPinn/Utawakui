@@ -123,6 +123,18 @@ function isDelivered(file) {
 }
 
 describe('packaged dependency boundary', () => {
+  it('excludes the independent site and adjacent runtime tests', () => {
+    for (const file of [
+      'site/src/App.vue',
+      'site/dist/index.html',
+      'site/package.json',
+      'overlay/lyrics/contract.spec.mjs',
+      'shared/presentation/contract.test.cjs',
+    ]) {
+      expect(isDelivered(file), file).toBe(false);
+    }
+  });
+
   it('excludes reference pitch prototype assets and workers', () => {
     for (const file of [
       'model.onnx',

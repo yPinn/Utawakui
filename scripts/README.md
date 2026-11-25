@@ -6,6 +6,7 @@
 
 - `npm run dev` 啟動桌面開發環境。`npm run dev:tools` 同時開啟 Chromium DevTools，`npm run dev:pseudo` 以假語系檢查翻譯版面。
 - `npm run check` 依序檢查程式碼、Markdown 與格式。也可單跑 `npm run lint`、`npm run lint:md` 或 `npm run format:check`。需要套用修正時用 `npm run lint:fix` 或 `npm run format`。
+- 提交前按副檔名檢查已暫存檔案，並以相對路徑交給檢查工具，讓 Windows 的 Markdown 檔案也能被掃描。Python 與 PowerShell 腳本依各自的執行環境驗證。
 - `npm test` 執行自動測試。`npm run test:watch` 持續監看變更，`npm run test:coverage` 加上覆蓋率門檻。`npm run test:linux -- <測試檔>` 在 Linux 容器內執行測試，與 CI 的 Ubuntu 環境一致；需要 Docker，用法見 [CI 手冊](../docs/operations/ci-usage.md#cross-platform-tests)。
 - `npm run build` 建置 renderer。`npm start` 建置後啟動桌面程式。
 - `npm run clean` 清除可重建的建置、覆蓋率、Vite 快取與封裝產物。執行前先確認沒有仍在使用的封裝或驗證產物。
@@ -16,6 +17,7 @@
 - `npm run package` 產生未簽署的 Windows 安裝與更新檔。`npm run package:unpacked` 只產生可直接啟動的目錄。`npm run package:signing` 啟用選用的 Authenticode 簽署設定。三個入口都只產出本機檔案。
 - `npm run release:prepare <version>` 更新版號並建立發行說明草稿；`npm run release:publish <version> [--confirm]` 檢查公開 draft，加 `--confirm` 才發布。
 - `npm run release:verify-version`、`npm run release:verify-artifacts`、`npm run release:verify-installed` 分別檢查版號、發版產物及實際安裝。參數與流程見[發行手冊](../docs/operations/release-runbook.md)。
+- `npm run site:install` 安裝產品網站的獨立依賴；`npm run site:dev`、`npm run site:build`、`npm run site:preview` 分別啟動開發（5180）、建置與預覽（5181）。見[網站說明](../site/README.md)。
 - `npm run lint:commit` 檢查最近一筆 commit。CI 的提交範圍與 `audit:prod`、`audit:all`、`audit:runtime` 執行條件見 [CI 手冊](../docs/operations/ci-usage.md)。
 - `npm run license:inventory` 產生依賴清單。`npm run license:verify` 驗證第三方聲明，`npm run license:write` 重建聲明。
 

@@ -1,0 +1,199 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--site-ground-dark);
+  color: var(--site-text);
+  font-family: var(--site-font-body);
+  font-size: var(--ui-type-body-size);
+  line-height: var(--ui-type-body-line-height);
+}
+
+.site-scroll__viewport {
+  overflow-anchor: none;
+  scroll-padding-block: var(--ui-space-4);
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+:focus-visible {
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
+  outline-offset: var(--ui-focus-offset);
+}
+
+/* App type recipes; components pick a role instead of writing sizes. */
+.type-heading {
+  font-size: var(--ui-type-heading-size);
+  font-weight: var(--ui-type-heading-weight);
+  line-height: var(--ui-type-heading-line-height);
+}
+
+.type-title {
+  font-size: var(--ui-type-title-size);
+  font-weight: var(--ui-type-title-weight);
+  line-height: var(--ui-type-title-line-height);
+}
+
+.type-body {
+  font-size: var(--ui-type-body-size);
+  font-weight: var(--ui-type-body-weight);
+  line-height: var(--site-line-reading);
+}
+
+.type-caption {
+  font-size: var(--ui-type-caption-size);
+  font-weight: var(--ui-type-caption-weight);
+  line-height: var(--ui-type-caption-line-height);
+}
+
+/* Marketing display tier, set in the overlay display face. */
+.display {
+  text-wrap: balance;
+  font-family: var(--site-font-display);
+  font-weight: var(--site-weight-display);
+  line-height: var(--site-line-display);
+}
+
+.display--hero {
+  font-size: var(--site-type-hero);
+  line-height: 1;
+}
+
+.display--chapter {
+  font-size: var(--site-type-chapter);
+}
+
+.display--lead {
+  font-size: var(--site-type-lead);
+}
+
+.display--statement {
+  font-size: var(--site-type-statement);
+}
+
+/* Key phrase marked like the lyrics reader's current line. */
+.marker {
+  background: linear-gradient(
+      transparent 58%,
+      var(--site-highlight) 58%,
+      var(--site-highlight) 92%,
+      transparent 92%
+    )
+    no-repeat;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.chapter {
+  position: relative;
+  isolation: isolate;
+}
+
+.chapter--wave {
+  padding-block-start: calc(var(--wave-h) + var(--chapter-top-gap, 0px));
+}
+
+.scroll-scene {
+  block-size: var(--site-viewport-height);
+  overflow: clip;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .scroll-scene {
+    position: sticky;
+    inset-block-start: 0;
+  }
+}
+
+.on-material {
+  color: var(--site-on-material);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ui-space-2);
+  min-height: calc(var(--ui-control-height) * 1.25);
+  padding: var(--ui-space-3) var(--ui-space-6);
+  border: 1px solid transparent;
+  border-radius: var(--site-radius-pill);
+  font-size: var(--ui-type-title-size);
+  font-weight: var(--ui-font-weight-semibold);
+  line-height: var(--ui-type-title-line-height);
+  text-decoration: none;
+  transition:
+    background-color var(--ui-motion-duration-feedback)
+      var(--ui-motion-easing-standard),
+    box-shadow var(--ui-motion-duration-feedback)
+      var(--ui-motion-easing-standard);
+}
+
+.btn--primary {
+  background: var(--site-accent);
+  color: var(--site-accent-contrast);
+  box-shadow: var(--site-shadow-soft);
+}
+
+.btn--primary:hover {
+  background: var(--ui-color-accent-hover);
+}
+
+.btn--secondary {
+  border-color: var(--ui-color-border-strong);
+  background: var(--site-paper);
+  color: var(--site-text);
+}
+
+.btn--secondary:hover {
+  background: var(--ui-color-surface-hover);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Quiet ruled-paper grain for neutral grounds. */
+.texture-paper {
+  background-image: repeating-linear-gradient(
+    transparent 0 calc(var(--ui-space-6) - 1px),
+    color-mix(in srgb, var(--site-border) 45%, transparent)
+      calc(var(--ui-space-6) - 1px) var(--ui-space-6)
+  );
+}
+
+/* Dot grid for folder-material grounds. */
+.texture-dots {
+  background-image: radial-gradient(
+    color-mix(in srgb, var(--site-on-material) 14%, transparent) 1.5px,
+    transparent 2px
+  );
+  background-size: var(--ui-space-6) var(--ui-space-6);
+}

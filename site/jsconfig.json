@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "paths": {
+      "@app-tokens": ["../src/styles/tokens.css"],
+      "@app-scroll-region": ["../src/components/ui/UiScrollRegion.vue"],
+      "@icons/*": ["../public/assets/icons/*"],
+      "@thumbnails/*": ["../src/assets/output-template-thumbnails/*"]
+    }
+  },
+  "include": ["src/**/*", "vite.config.js"]
+}

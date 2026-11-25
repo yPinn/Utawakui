@@ -164,7 +164,7 @@ module.exports = [
     },
   },
   {
-    files: ['scripts/**/*.mjs', 'tools/**/*.mjs'],
+    files: ['scripts/**/*.mjs', 'tools/**/*.mjs', 'site/vite.config.js'],
     languageOptions: {
       sourceType: 'module',
       globals: globals.node,
@@ -192,7 +192,7 @@ module.exports = [
     },
   },
   {
-    files: ['src/**/*.{js,vue}'],
+    files: ['src/**/*.{js,vue}', 'site/src/**/*.{js,vue}'],
     languageOptions: {
       sourceType: 'module',
       globals: globals.browser,
